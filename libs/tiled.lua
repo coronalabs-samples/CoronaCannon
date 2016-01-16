@@ -3,6 +3,8 @@
 local physics = require('physics')
 local bit = require('plugin.bit')
 
+local eachframe = require('libs.eachframe')
+
 local _W, _H = display.actualContentWidth, display.actualContentHeight
 local _CX, _CY = display.contentCenterX, display.contentCenterY
 
@@ -33,7 +35,6 @@ local function load(self, params)
     self.specs = params.specs or {}
 
     self:prepareTilesets()
-    self.collisionHandlers = params.collisionHandlers
 
     self.snapshot = display.newSnapshot(params.g, _W, _H)
     self.snapshot.x, self.snapshot.y = 0, 0
@@ -45,10 +46,22 @@ local function load(self, params)
     params.g:insert(self.physicsGroup)
     self.physicsGroup.x, self.physicsGroup.y = self.snapshot.x, self.snapshot.y
 
-    self.camera = {x = 0, y = 0, low = {x = 0, y = 0}, high = {x = self.map.tilewidth * self.map.width - _W, y = self.map.tilewidth * self.map.height - _H}}
+    self.camera = {
+        x = 0, y = 0,
+        xIncrement = 0, yIncrement = 0,
+        low = {x = 0, y = 0},
+        high = {x = self.map.tilewidth * self.map.width - _W, y = self.map.tilewidth * self.map.height - _H}
+    }
 
     local color = self.map.backgroundcolor
     self.map.backgroundcolor = {color[1] / 255, color[2] / 255, color[3] / 255}
+
+    eachframe.add(self)
+    local super = self
+    function self.snapshot:finalize()
+        eachframe.remove(super)
+    end
+    self.snapshot:addEventListener('finalize')
 end
 
 local function prepareTilesets(self)
@@ -127,35 +140,6 @@ local function newTile(self, params)
         end
         if flip.y then
             tile.yScale = -1
-        end
-    end
-
-    if properties.material then
-        local rect = display.newRect(tile.x, tile.y, tile.width, tile.height)
-        rect.isVisible = false
-        self.physicsGroup:insert(rect)
-
-        rect.rotation = tile.rotation
-        if tile.yScale == -1 then
-            rect.rotation = rect.rotation + 180
-        end
-
-        local body = {}
-        local shape = self.specs.shapes[properties.shape]
-        for i = 1, #shape do
-            local element = {shape = shape[i], density = 1, bounce = 0, friction = 0}
-            table.insert(body, element)
-        end
-        physics.addBody(rect, 'static', unpack(body))
-        if properties.material == 'none' then
-            rect.isSensor = true
-        end
-
-        if properties.effect then
-            rect.effect = properties.effect
-            if self.collisionHandlers[properties.effect] then
-                rect:addEventListener('collision', self.collisionHandlers[properties.effect])
-            end
         end
     end
     return tile
@@ -247,7 +231,42 @@ local function moveCameraSmoothly(self, params)
 
     local t = {_x = self.camera.x, _y = self.camera.y}
     setmetatable(t, mt)
-    transition.to(t, {x = params.x, y = params.y, time = params.time or 1000, delay = params.delay or 0, transition = easing.inOutExpo})
+    self.smoothMovementTransition = transition.to(t, {x = params.x, y = params.y, time = params.time or 1000, delay = params.delay or 0, transition = easing.inOutExpo})
+end
+
+local function snapCameraTo(self, object)
+    self.camera.snappedObject = object
+    if self.smoothMovementTransition then
+        transition.cancel(self.smoothMovementTransition)
+        self.smoothMovementTransition = nil
+    end
+end
+
+local function eachFrame(self)
+    local step = 50
+    local damping = 0.98
+    if self.camera.xIncrement ~= 0 or self.camera.yIncrement ~= 0 then
+        self.camera.xIncrement = self.camera.xIncrement * damping
+        if math.abs(self.camera.xIncrement) < 0.1 then
+            self.camera.xIncrement = 0
+        end
+        self.camera.yIncrement = self.camera.yIncrement * damping
+        if math.abs(self.camera.yIncrement) < 0.1 then
+            self.camera.yIncrement = 0
+        end
+        self:moveCamera(self.camera.x + self.camera.xIncrement * step, self.camera.y + self.camera.yIncrement * step)
+    elseif self.camera.snappedObject then
+        if self.camera.snappedObject.x then
+            local w, h = _W * 0.33 / 2, _H * 0.33 / 2 -- Object tracking window
+            local oX, oY = self.camera.snappedObject.x, self.camera.snappedObject.y
+            local x, y = self.camera.x + _CX, self.camera.y + _CY
+            x = clamp(x, oX - w, oX + w)
+            y = clamp(y, oY - h, oY + h)
+            self:moveCamera(x - _CX, y - _CY)
+        else
+            self.camera.snappedObject = nil
+        end
+    end
 end
 
 local function mapXYToPixels(self, x, y)
@@ -266,6 +285,8 @@ function _M.newTiledMap(params)
         draw = draw,
         moveCamera = moveCamera,
         moveCameraSmoothly = moveCameraSmoothly,
+        snapCameraTo = snapCameraTo,
+        eachFrame = eachFrame,
         mapXYToPixels = mapXYToPixels
     }
     tiledMap:load(params)

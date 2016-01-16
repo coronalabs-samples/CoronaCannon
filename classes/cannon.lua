@@ -4,6 +4,9 @@
 local eachframe = require('libs.eachframe')
 local sounds = require('libs.sounds')
 
+local _W, _H = display.actualContentWidth, display.actualContentHeight
+local _CX, _CY = display.contentCenterX, display.contentCenterY
+
 local _M = {}
 
 local newBall = require('classes.ball').newBall
@@ -24,6 +27,10 @@ function _M.newCannon(params)
 
 	-- Cannon force is set by a player by moving the finger away from the cannon
 	cannon.force = 0
+	cannon.forceRadius = 0
+	-- Increments are for gamepad control
+	cannon.radiusIncrement = 0
+	cannon.rotationIncrement = 0
 	-- Minimum and maximum radius of the force circle indicator
 	local radiusMin, radiusMax = 64, 200
 
@@ -77,7 +84,35 @@ function _M.newCannon(params)
 			self.launchTime = system.getTimer() -- This time value is needed for the trajectory points
 			self.lastTrajectoryPointTime = self.launchTime
 			newPuff({g = self.parent, x = self.x, y = self.y, isExplosion = true}) -- Display an explosion visual effect
+			map:snapCameraTo(self.ball)
 			sounds.play('cannon')
+		end
+	end
+
+	function cannon:setForce(radius, rotation)
+		self.rotation = rotation % 360
+		if radius > radiusMin then
+			if radius > radiusMax then
+				radius = radiusMax
+			end
+			self.force = radius
+		else
+			self.force = 0
+		end
+		-- Only show the force indication if there is a loaded cannon ball
+		if self.ball and not self.ball.isLaunched then
+			forceArea.isVisible = true
+			forceArea.xScale = 2 * radius / forceArea.width
+			forceArea.yScale = forceArea.xScale
+		end
+		return math.min(radius, radiusMax), self.rotation
+	end
+
+	function cannon:engageForce()
+		forceArea.isVisible = false
+		self.radius = 0
+		if self.force > 0 then
+			self:fire()
 		end
 	end
 
@@ -90,29 +125,13 @@ function _M.newCannon(params)
 			if event.phase == 'moved' then
 				local x, y = self.parent:contentToLocal(event.x, event.y)
 				x, y = x - self.x, y - self.y
-				self.rotation = math.atan2(y, x) * 180 / math.pi + 180
+				local rotation = math.atan2(y, x) * 180 / math.pi + 180
 				local radius = math.sqrt(x ^ 2 + y ^ 2)
-				if radius > radiusMin then
-					if radius > radiusMax then
-						radius = radiusMax
-					end
-					self.force = radius
-				else
-					self.force = 0
-				end
-				-- Only show the force indication if there is a loaded cannon ball
-				if self.ball and not self.ball.isLaunched then
-					forceArea.isVisible = true
-					forceArea.xScale = 2 * radius / forceArea.width
-					forceArea.yScale = forceArea.xScale
-				end
+				self:setForce(radius, rotation)
 			else
 				display.getCurrentStage():setFocus(self, nil)
 				self.isFocused = false
-				forceArea.isVisible = false
-				if self.force > 0 then
-					self:fire()
-				end
+				self:engageForce()
 			end
 		end
 		return true
@@ -140,18 +159,34 @@ function _M.newCannon(params)
 	-- echFrame() is like enterFrame(), but managed by a library
 	-- Track a launched ball until it stops and load another one
 	function cannon:eachFrame()
-		if self.ball and self.ball.isLaunched then
-			local vx, vy = self.ball:getLinearVelocity()
-			if vx ^ 2 + vy ^ 2 < 4 or
-				self.ball.x < 0 or
-					self.ball.x > map.map.tilewidth * map.map.width or
-						self.ball.y > map.map.tilewidth * map.map.height then
-				self.ball:destroy()
-				self.ball = nil
-				self:load()
-			elseif not self.isPaused then
-				self:addTrajectoryPoint()
-			end
+		local step = 5
+	    local damping = 0.98
+		if self.ball then
+			if self.ball.isLaunched then
+				local vx, vy = self.ball:getLinearVelocity()
+				if vx ^ 2 + vy ^ 2 < 4 or
+					self.ball.x < 0 or
+						self.ball.x > map.map.tilewidth * map.map.width or
+							self.ball.y > map.map.tilewidth * map.map.height then
+					self.ball:destroy()
+					self.ball = nil
+					self:load()
+					map:moveCameraSmoothly({x = self.x - _CX, y = self.y - _CY, time = 1000, delay = 500})
+				elseif not self.isPaused then
+					self:addTrajectoryPoint()
+				end
+			elseif self.radiusIncrement ~= 0 or self.rotationIncrement ~= 0 then
+		        self.radiusIncrement = self.radiusIncrement * damping
+		        if math.abs(self.radiusIncrement) < 0.1 then
+		            self.radiusIncrement = 0
+		        end
+				self.rotationIncrement = self.rotationIncrement * damping
+		        if math.abs(self.rotationIncrement) < 0.1 then
+		            self.rotationIncrement = 0
+		        end
+				self.forceRadius = self.forceRadius + self.radiusIncrement * step
+				self.forceRadius = self:setForce(math.max(math.abs(self.forceRadius), 1), self.rotation + self.rotationIncrement * step)
+		    end
 		end
 	end
 	eachframe.add(cannon)

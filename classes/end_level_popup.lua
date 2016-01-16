@@ -3,6 +3,7 @@
 
 local composer = require('composer')
 local widget = require('widget')
+local controller = require('libs.controller')
 local sounds = require('libs.sounds')
 
 local _M = {}
@@ -18,6 +19,8 @@ function _M.newEndLevelPopup(params)
 
 	local background = display.newImageRect(popup, 'images/end_level.png', 480, 480)
 	popup.x, popup.y = _CX, -background.height
+
+	local visualButtons = {}
 
 	local label = display.newText({
 		parent = popup,
@@ -37,7 +40,9 @@ function _M.newEndLevelPopup(params)
 			composer.gotoScene('scenes.menu', {time = 500, effect = 'slideRight'})
 		end
 	})
+	menuButton.isRound = true
 	popup:insert(menuButton)
+	table.insert(visualButtons, menuButton)
 
 	local restartButton = widget.newButton({
 		defaultFile = 'images/buttons/restart.png',
@@ -49,7 +54,9 @@ function _M.newEndLevelPopup(params)
 			composer.gotoScene('scenes.reload_game', {params = params.levelId})
 		end
 	})
+	restartButton.isRound = true
 	popup:insert(restartButton)
+	table.insert(visualButtons, restartButton)
 
 	-- Don't display the next button if it was the last level
 	if params.levelId < composer.getVariable('levelCount') then
@@ -63,7 +70,9 @@ function _M.newEndLevelPopup(params)
 				composer.gotoScene('scenes.reload_game', {params = params.levelId + 1})
 			end
 		})
+		nextButton.isRound = true
 		popup:insert(nextButton)
+		table.insert(visualButtons, nextButton)
 	end
 
 	local superParams = params
@@ -78,6 +87,7 @@ function _M.newEndLevelPopup(params)
 			label.text = 'YOU LOST!'
 		end
 
+		controller.setVisualButtons(visualButtons)
 		transition.to(self, {time = 250, y = _CY, transition = easing.outExpo})
 	end
 

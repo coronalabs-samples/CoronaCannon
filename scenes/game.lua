@@ -5,8 +5,8 @@
 local composer = require('composer') -- Scene management
 local physics = require('physics') -- Box2D physics
 local widget = require('widget') -- Buttons
+local controller = require('libs.controller') -- Gamepad support
 local databox = require('libs.databox') -- Persistant storage, track level completion and settings
-local eachframe = require('libs.eachframe') -- enterFrame manager
 local sounds = require('libs.sounds') -- Music and sounds manager
 local tiled = require('libs.tiled') -- Tiled map loader
 
@@ -46,7 +46,6 @@ function scene:create(event)
 	self.map.camera.high.y = self.map.camera.high.y
 	self.map:moveCamera(self.map.camera.high.x, 0) -- Move camera to the end of the level
 	self.map:draw()
-	self.map:moveCameraSmoothly({x = 0, y = 0, time = 1000, delay = 1000}) -- Slide it back to the cannon
 
 	-- Bugs, blocks and balls are inserted into self.map.physicsGroup
 	self.bugs = {}
@@ -70,11 +69,13 @@ function scene:create(event)
 	self:createTouchRect({delay = 2000})
 	self.map.physicsGroup:toFront() -- Put cannon in front of the touchRect
 	self.cannon = newCannon({map = self.map, level = self.level})
+	self.map:moveCameraSmoothly({x = self.cannon.x - _CX, y = 0, time = 1000, delay = 1000}) -- Slide it back to the cannon
 
 	-- Preload End Level Popup and Sidebar
 	self.endLevelPopup = newEndLevelPopup({g = group, levelId = self.levelId})
 	local sidebar = newSidebar({g = group, levelId = self.levelId, onHide = function()
 		self:setIsPaused(false)
+		controller.setVisualButtons()
 	end})
 
 	local levelLabel = display.newText({
@@ -102,12 +103,51 @@ function scene:create(event)
 
 	sidebar:toFront()
 
+	controller.setVisualButtons()
+	-- Map movement on gamepad left stick
+	controller.onMotion = function(name, value)
+		if not self.isPaused then
+			self.map:snapCameraTo()
+			if name == 'x' then
+				self.map.camera.xIncrement = value
+			elseif name == 'y' then
+				self.map.camera.yIncrement = value
+			end
+		end
+	end
+	-- Cannon control on gamepad right stick
+	controller.onRotation = function(name, value)
+		if not self.isPaused then
+			if self.cannon.ball and not self.cannon.ball.isLaunched then
+				self.map:snapCameraTo(self.cannon)
+			end
+			if name == 'x' then
+				self.cannon.radiusIncrement = value
+			elseif name == 'y' then
+				self.cannon.rotationIncrement = value
+			end
+		end
+	end
+	-- Other gamepad and keyboard buttons
+	controller.onKey = function(keyName, keyType)
+		if not self.isPaused then
+			if keyType == 'action' then
+				cannonControllerRadius = 0
+				self.cannon:engageForce()
+			elseif keyType == 'pause' then
+				pauseButton._view._onRelease()
+			elseif keyType == 'switch' then
+				-- switch for tvOS
+				controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
+			end
+		end
+	end
+
 	-- Only check once in a while for level end
 	self.endLevelCheckTimer = timer.performWithDelay(2000, function()
 		self:endLevelCheck()
 	end, 0)
 
-	eachframe.add(self)
 	sounds.playStream('game_music')
 end
 
@@ -128,16 +168,6 @@ function scene:setIsPaused(isPaused)
 		physics.pause()
 	else
 		physics.start()
-	end
-end
-
--- Glue camera to the flying cannon ball
-function scene:eachFrame()
-	if not self.isPaused then
-		local ball = self.cannon.ball
-		if ball and ball.isLaunched then
-			self.map:moveCamera(ball.x - _CX, self.map.camera.y)
-		end
 	end
 end
 
@@ -177,10 +207,8 @@ function scene:createTouchRect(params)
 			self.xStart, self.yStart = map.camera.x, map.camera.y
 		elseif self.isFocused then
 			if event.phase == 'moved' then
-				local ball = super.cannon.ball
-				if not ball or not ball.isLaunched then
-					map:moveCamera(self.xStart - event.x + event.xStart, self.yStart - event.y + event.yStart)
-				end
+				map:snapCameraTo()
+				map:moveCamera(self.xStart - event.x + event.xStart, self.yStart - event.y + event.yStart)
 			else
 				display.getCurrentStage():setFocus(self, nil)
 				self.isFocused = false
@@ -197,7 +225,9 @@ end
 
 -- Clean up
 function scene:destroy()
-	eachframe.remove(self)
+	controller.onMotion = nil
+	controller.onRotation = nil
+	controller.onKey = nil
 	if self.endLevelCheckTimer then
 		timer.cancel(self.endLevelCheckTimer)
 	end

@@ -4,6 +4,7 @@
 
 local composer = require('composer')
 local widget = require('widget')
+local controller = require('libs.controller')
 local databox = require('libs.databox')
 local sounds = require('libs.sounds')
 
@@ -21,6 +22,8 @@ function _M.newSidebar(params)
 	local background = display.newImageRect(sidebar, 'images/sidebar.png', 160, 640)
 	sidebar.x, sidebar.y = -background.width, _CY
 
+	local visualButtons = {}
+
 	local spacing = background.height / 6 + 12
 	local start = -background.height / 2 + spacing / 2 + 24
 
@@ -34,7 +37,9 @@ function _M.newSidebar(params)
 			sidebar:hide()
 		end
 	})
+	resumeButton.isRound = true
 	sidebar:insert(resumeButton)
+	table.insert(visualButtons, resumeButton)
 
 	if params.levelId then
 		local restartButton = widget.newButton({
@@ -47,7 +52,9 @@ function _M.newSidebar(params)
 				composer.gotoScene('scenes.reload_game', {params = params.levelId})
 			end
 		})
+		restartButton.isRound = true
 		sidebar:insert(restartButton)
+		table.insert(visualButtons, restartButton)
 
 		local menuButton = widget.newButton({
 			defaultFile = 'images/buttons/menu.png',
@@ -59,7 +66,9 @@ function _M.newSidebar(params)
 				composer.gotoScene('scenes.menu', {time = 500, effect = 'slideRight'})
 			end
 		})
+		menuButton.isRound = true
 		sidebar:insert(menuButton)
+		table.insert(visualButtons, menuButton)
 	end
 
 	local soundsButtons = {}
@@ -94,10 +103,15 @@ function _M.newSidebar(params)
 			sounds.play('tap')
 			sounds.isMusicOn = false
 			updateDataboxAndVisibility()
+			if controller.isActive() then
+				controller.selectVisualButton(musicButtons.off)
+			end
 			sounds.stop()
 		end
 	})
+	musicButtons.on.isRound = true
 	sidebar:insert(musicButtons.on)
+	table.insert(visualButtons, musicButtons.on)
 
 	musicButtons.off = widget.newButton({
 		defaultFile = 'images/buttons/music_off.png',
@@ -108,6 +122,9 @@ function _M.newSidebar(params)
 			sounds.play('tap')
 			sounds.isMusicOn = true
 			updateDataboxAndVisibility()
+			if controller.isActive() then
+				controller.selectVisualButton(musicButtons.on)
+			end
 			if params.levelId then
 				sounds.playStream('game_music')
 			else
@@ -115,7 +132,9 @@ function _M.newSidebar(params)
 			end
 		end
 	})
+	musicButtons.off.isRound = true
 	sidebar:insert(musicButtons.off)
+	table.insert(visualButtons, musicButtons.off)
 
 	soundsButtons.on = widget.newButton({
 		defaultFile = 'images/buttons/sounds_on.png',
@@ -126,9 +145,14 @@ function _M.newSidebar(params)
 			sounds.play('tap')
 			sounds.isSoundOn = false
 			updateDataboxAndVisibility()
+			if controller.isActive() then
+				controller.selectVisualButton(soundsButtons.off)
+			end
 		end
 	})
+	soundsButtons.on.isRound = true
 	sidebar:insert(soundsButtons.on)
+	table.insert(visualButtons, soundsButtons.on)
 
 	soundsButtons.off = widget.newButton({
 		defaultFile = 'images/buttons/sounds_off.png',
@@ -139,9 +163,14 @@ function _M.newSidebar(params)
 			sounds.play('tap')
 			sounds.isSoundOn = true
 			updateDataboxAndVisibility()
+			if controller.isActive() then
+				controller.selectVisualButton(soundsButtons.on)
+			end
 		end
 	})
+	soundsButtons.off.isRound = true
 	sidebar:insert(soundsButtons.off)
+	table.insert(visualButtons, soundsButtons.off)
 
 	updateDataboxAndVisibility()
 
@@ -149,6 +178,7 @@ function _M.newSidebar(params)
 		self.shade = newShade(params.g)
 		self:toFront()
 		transition.to(self, {time = 250, x = background.width / 2, transition = easing.outExpo})
+		controller.setVisualButtons(visualButtons)
 	end
 
 	function sidebar:hide()

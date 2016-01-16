@@ -26,7 +26,7 @@ function _M.newBall(params)
 
 	function ball:explode()
 		sounds.play('explosion')
-		local radius = 128 -- Explosion radius, all objects touching this area will be affected by the explosion
+		local radius = 192 -- Explosion radius, all objects touching this area will be affected by the explosion
 		local area = display.newCircle(params.g, self.x, self.y, radius)
 		area.isVisible = false
 		physics.addBody(area, 'dynamic', {isSensor = true, radius = radius})
@@ -39,8 +39,8 @@ function _M.newBall(params)
 					affected[event.other] = true
 					local x, y = event.other.x - self.x, event.other.y - self.y
 					local dir = math.atan2(y, x) * 180 / math.pi
-					local force = (radius - math.sqrt(x ^ 2 + y ^ 2)) * 3 -- Reduce the force with the distance from the explosion
-					-- If an objects touches the explosion, the force will be at least this big
+					local force = (radius - math.sqrt(x ^ 2 + y ^ 2)) * 4 -- Reduce the force with the distance from the explosion
+					-- If an object touches the explosion, the force will be at least this big
 					if force < 20 then
 						force = 20
 					end

@@ -3,6 +3,7 @@
 
 local composer = require('composer')
 local widget = require('widget')
+local controller = require('libs.controller')
 local databox = require('libs.databox')
 local sounds = require('libs.sounds')
 
@@ -20,6 +21,8 @@ function scene:create()
 	    color1 = {0.8, 0.45, 0.2},
 	    color2 = {1, 0.8, 0.7}
 	}
+
+	local visualButtons = {}
 
 	local function onLevelButtonRelease(event)
 		sounds.play('tap')
@@ -40,17 +43,18 @@ function scene:create()
 			defaultFile = 'images/buttons/level.png',
 			overFile = 'images/buttons/level-over.png',
 			width = 160, height = 175,
-			x = _CX + x * spacing, y = 32 + y * spacing,
+			x = _CX + x * spacing, y = 32 + y * spacing + 87,
 			onRelease = onLevelButtonRelease
 		})
-		button.anchorY = 0
 		group:insert(button)
+		table.insert(visualButtons, button)
 
 		-- Check if this level was completed
 		if databox['level' .. i] then
-			local check = display.newImageRect(group, 'images/check.png', 48, 48)
+			local check = display.newImageRect('images/check.png', 48, 48)
 			check.anchorX, check.anchorY = 1, 1
-			check.x, check.y = button.x + button.width / 2 - 3, button.y + button.height - 18
+			check.x, check.y = button.width - 3, button.height - 18
+			button:insert(check) -- Insert after positioning, because if inserted before, button.width/height will be different
 		end
 
 		x = x + 1
@@ -59,6 +63,7 @@ function scene:create()
 			y = y + 1
 		end
 	end
+	controller.setVisualButtons(visualButtons)
 end
 
 scene:addEventListener('create')
