@@ -1,4 +1,3 @@
-local json = require('json')
 local eachframe = require('libs.eachframe')
 
 local _M = {}
@@ -152,7 +151,12 @@ end
 -- If some controller sends some data, make it active and select an on-screen button
 function _M.checkActiveDevice(device)
     local self = _M
-    if device and not self.activeDevice then
+    if device and not self.activeDevice and (
+            device.type == 'keyboard' or -- Allow only these devices to be used with the game
+            device.type == 'joystick' or
+            device.type == 'gamepad' or
+            device.type == 'directionalPad'
+        ) then
         self.activeDevice = device
         if #self.visualButtons > 0 and not self.activeVisualButton then
             for i = 1, #self.visualButtons do
@@ -165,18 +169,17 @@ function _M.checkActiveDevice(device)
     end
 end
 
--- Check if the currently active controller is disconnected
-function _M.inputDeviceStatus(event)
-    local self = _M
-    if event.device == self.activeDevice and event.device.connectionState == 'disconnected' then
-        self.activeDevice = nil
-        self.deselectVisualButton()
-    end
-end
-
 function _M.getInputDevices()
     local self = _M
     self.devices = system.getInputDevices()
+end
+
+-- Check if the currently active controller is disconnected
+function _M:inputDeviceStatus(event)
+    if event.device and event.device == self.activeDevice and event.device.connectionState == 'disconnected' then
+        self.activeDevice = nil
+        self.deselectVisualButton()
+    end
 end
 
 -- Sticks and D-pad

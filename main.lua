@@ -35,6 +35,33 @@ local composer = require('composer')
 composer.recycleOnSceneChange = true -- Automatically remove scenes from memory
 composer.setVariable('levelCount', 10) -- Set how many levels there are under levels/ directory
 
+-- Add support for back button on Android
+-- When it's pressed, check if current scene has a special field gotoPreviousScene
+-- If it's a function - call it, if it's true - go back automatically, if it's a string - go back to the specified scene
+if platform == 'Android' then
+	Runtime:addEventListener('key', function(event)
+		if event.phase == 'down' and event.keyName == 'back' then
+			local scene = composer.getScene(composer.getSceneName('current'))
+            if scene then
+				if type(scene.gotoPreviousScene) == 'function' then
+                	scene:gotoPreviousScene()
+                	return true
+				elseif type(scene.gotoPreviousScene) == 'string' then
+					composer.gotoScene(scene.gotoPreviousScene, {time = 500, effect = 'slideRight'})
+					return true
+				elseif scene.gotoPreviousScene == true then
+					composer.gotoScene(composer.getSceneName('previous'), {time = 500, effect = 'slideRight'})
+					return true
+				end
+            end
+		end
+	end)
+end
+-- Please note that above Runtime events use anonymous listeners. While it's fine for these cases,
+-- it is not possible to remove the event listener if needed. For instanse, an accelerometer event listener must be removed at some point
+-- to reduce battery consumption.
+-- The above cases are fine to use anonymous listeners because we don't need to remove them ever.
+
 -- Add support for controllers so the game is playable on Android TV and Apple TV
 require('libs.controller') -- Activate by requiring
 

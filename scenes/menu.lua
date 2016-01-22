@@ -107,6 +107,15 @@ function scene:setVisualButtons()
 	controller.setVisualButtons({self.playButton, self.settingsButton})
 end
 
+-- Android's back button action
+function scene:gotoPreviousScene()
+	native.showAlert('Corona Cannon', 'Are you sure you want to exit the game?', {'Yes', 'Cancel'}, function(event)
+		if event.action == 'clicked' and event.index == 1 then
+			native.requestExit()
+		end
+	end)
+end
+
 scene:addEventListener('create')
 
 return scene

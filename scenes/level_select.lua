@@ -64,6 +64,8 @@ function scene:create()
 		end
 	end
 	controller.setVisualButtons(visualButtons)
+
+	self.gotoPreviousScene = true -- Allow going back on Android's back button press
 end
 
 scene:addEventListener('create')

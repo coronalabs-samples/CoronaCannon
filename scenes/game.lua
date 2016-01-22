@@ -26,7 +26,7 @@ local scene = composer.newScene()
 
 local newCannon = require('classes.cannon').newCannon -- The ultimate weapon
 local newBug = require('classes.bug').newBug -- Enemies to kill, debug powers
-local newBlock = require('classes.block').newBlock -- Buildig blocks for the levels
+local newBlock = require('classes.block').newBlock -- Building blocks for the levels
 local newSidebar = require('classes.sidebar').newSidebar -- Settings and pause sidebar
 local newEndLevelPopup = require('classes.end_level_popup').newEndLevelPopup -- Win/Lose dialog windows
 
@@ -63,7 +63,8 @@ function scene:create(event)
 			x = b.x, y = b.y,
 			rotation = b.rotation,
 			material = b.material,
-			name = b.name}))
+			name = b.name
+		}))
 	end
 
 	-- Handle touch events, wait a little for camera to slide
@@ -145,22 +146,27 @@ function scene:create(event)
 			end
 		end
 	end
+end
 
-	eachframe.add(self) -- Each frame self:eachFrame() is called
+function scene:show(event)
+	if event.phase == 'did' then
+		eachframe.add(self) -- Each frame self:eachFrame() is called
 
-	-- Only check once in a while for level end
-	self.endLevelCheckTimer = timer.performWithDelay(2000, function()
-		self:endLevelCheck()
-	end, 0)
+		-- Only check once in a while for level end
+		self.endLevelCheckTimer = timer.performWithDelay(2000, function()
+			self:endLevelCheck()
+		end, 0)
 
-	if not databox.isHelpShown then
-		timer.performWithDelay(2500, function()
-			sidebar:show()
-			self:setIsPaused(true)
-		end)
+		-- Show help image once
+		if not databox.isHelpShown then
+			timer.performWithDelay(2500, function()
+				sidebar:show()
+				self:setIsPaused(true)
+			end)
+		end
+
+		sounds.playStream('game_music')
 	end
-
-	sounds.playStream('game_music')
 end
 
 -- Check for bugs and blocks being dead or outside the borders
@@ -243,19 +249,32 @@ function scene:createTouchRect(params)
 	end)
 end
 
+-- Android's back button action
+function scene:gotoPreviousScene()
+	native.showAlert('Corona Cannon', 'Are you sure you want to exit this level?', {'Yes', 'Cancel'}, function(event)
+		if event.action == 'clicked' and event.index == 1 then
+			composer.gotoScene('scenes.menu', {time = 500, effect = 'slideRight'})
+		end
+	end)
+end
+
 -- Clean up
-function scene:destroy()
-	eachframe.remove(self)
-	controller.onMotion = nil
-	controller.onRotation = nil
-	controller.onKey = nil
-	if self.endLevelCheckTimer then
-		timer.cancel(self.endLevelCheckTimer)
+function scene:hide(event)
+	if event.phase == 'will' then
+		eachframe.remove(self)
+		controller.onMotion = nil
+		controller.onRotation = nil
+		controller.onKey = nil
+		if self.endLevelCheckTimer then
+			timer.cancel(self.endLevelCheckTimer)
+		end
+	elseif event.phase == 'did' then
+		physics.stop()
 	end
-	physics.stop()
 end
 
 scene:addEventListener('create')
-scene:addEventListener('destroy')
+scene:addEventListener('show')
+scene:addEventListener('hide')
 
 return scene
