@@ -15,15 +15,19 @@ function _M.newBug(params)
 	bug.angularDamping = 3  -- Prevent from rolling for too long
 	bug.isAlive = true
 
+	function bug:destroy()
+		sounds.play('bug')
+		self.isAlive = false
+		newPuff({g = params.g, x = self.x, y = self.y})
+		timer.performWithDelay(1, function()
+			self:removeSelf()
+		end)
+	end
+
 	function bug:postCollision(event)
 		-- Increase this value to make the bugs stronger
-		if event.force > 35 and self.isAlive then
-			sounds.play('bug')
-			self.isAlive = false
-			newPuff({g = params.g, x = self.x, y = self.y})
-			timer.performWithDelay(1, function()
-				self:removeSelf()
-			end)
+		if event.force > 30 and self.isAlive then
+			self:destroy()
 		end
 	end
 	bug:addEventListener('postCollision')

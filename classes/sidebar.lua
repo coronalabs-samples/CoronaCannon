@@ -174,15 +174,61 @@ function _M.newSidebar(params)
 
 	updateDataboxAndVisibility()
 
+	local badge = display.newImageRect(sidebar, 'images/badge.png', 200, 266)
+	badge.anchorX, badge.anchorY = 1, 1
+	badge.x, badge.y = _W - background.width / 2 - 16, background.height / 2 - 16
+	badge.isVisible = false
+	function badge:touch(event)
+		if event.phase == 'began' then
+			display.getCurrentStage():setFocus(self, event.id)
+			self.isFocused = true
+		elseif self.isFocused then
+			if event.phase ~= 'moved' then
+				display.getCurrentStage():setFocus(self, nil)
+				self.isFocused = false
+				system.openURL('https://coronalabs.com')
+			end
+		end
+		return true
+	end
+	badge:addEventListener('touch')
+
+	local appleTvRemoteHelp = display.newImageRect(sidebar, 'images/controls/apple_tv_remote.png', 500, 500)
+	appleTvRemoteHelp.x, appleTvRemoteHelp.y = _CX - background.width / 2, 0
+	appleTvRemoteHelp.isVisible = false
+
+	local gamepadHelp = display.newImageRect(sidebar, 'images/controls/gamepad.png', 500, 500)
+	gamepadHelp.x, gamepadHelp.y = appleTvRemoteHelp.x, appleTvRemoteHelp.y
+	gamepadHelp.isVisible = false
+
+	local touchScreenHelp = display.newImageRect(sidebar, 'images/controls/touchscreen.png', 500, 500)
+	touchScreenHelp.x, touchScreenHelp.y = appleTvRemoteHelp.x, appleTvRemoteHelp.y
+	touchScreenHelp.isVisible = false
+
 	function sidebar:show()
 		self.shade = newShade(params.g)
 		self:toFront()
-		transition.to(self, {time = 250, x = background.width / 2, transition = easing.outExpo})
+		badge.isVisible = true
+		if system.getInfo('platformName') == 'tvOS' then
+			appleTvRemoteHelp.isVisible = true
+		elseif controller.isActive() then
+			gamepadHelp.isVisible = true
+		else
+			touchScreenHelp.isVisible = true
+		end
 		controller.setVisualButtons(visualButtons)
+		if params.levelId then
+			databox.isHelpShown = true
+		end
+		transition.to(self, {time = 250, x = background.width / 2, transition = easing.outExpo})
 	end
 
 	function sidebar:hide()
 		self.shade:hide()
+		badge.isVisible = false
+		appleTvRemoteHelp.isVisible = false
+		gamepadHelp.isVisible = false
+		touchScreenHelp.isVisible = false
 		transition.to(self, {time = 250, x = -background.width, transition = easing.outExpo, onComplete = params.onHide})
 	end
 

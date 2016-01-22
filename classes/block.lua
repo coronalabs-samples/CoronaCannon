@@ -39,19 +39,26 @@ function _M.newBlock(params)
 	block.angularDamping = 3 -- Prevent from rolling for too long
 	block.isAlive = true
 
+	function block:destroy()
+		sounds.play('poof')
+		self.isAlive = false
+		newPuff({g = params.g, x = self.x, y = self.y})
+		timer.performWithDelay(1, function()
+			self:removeSelf()
+		end)
+	end
+
 	function block:postCollision(event)
 		if self.isAlive then
 			-- Small impact detection just to play a sound
 			if event.force > 20 then
-				sounds.play('impact')
+				local vx, vy = event.other:getLinearVelocity()
+				if vx + vy > 4 then
+					sounds.play('impact')
+				end
 			end
 			if event.force >= forceThreshold then
-				sounds.play('poof')
-				self.isAlive = false
-				newPuff({g = params.g, x = self.x, y = self.y})
-				timer.performWithDelay(1, function()
-					self:removeSelf()
-				end)
+				self:destroy()
 			end
 		end
 	end

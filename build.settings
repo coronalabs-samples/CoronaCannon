@@ -5,7 +5,10 @@ settings = {
     },
     android = {
         installLocation = 'auto',
-        usesPermissions = {}
+        usesPermissions = {},
+        supportsTV = true,
+        isGame = true,
+        largeHeap = true
     },
     iphone = {
         plist = {
@@ -33,10 +36,49 @@ settings = {
         },
         skipPNGCrush = true
     },
+    tvos = {
+        iCloud = true,
+        icon = {
+            small = { -- A collection of 400x240 images, in order from top to bottom
+                'Icon-tvOS-Small-4.png',
+                'Icon-tvOS-Small-3.png',
+                'Icon-tvOS-Small-2.png',
+                'Icon-tvOS-Small-1.png'
+            },
+            large = { -- A collection of 1280x768 images, in order from top to bottom
+                'Icon-tvOS-Large-4.png',
+                'Icon-tvOS-Large-3.png',
+                'Icon-tvOS-Large-2.png',
+                'Icon-tvOS-Large-1.png'
+            }
+        },
+        topShelfImage = 'Icon-tvOS-TopShelf.png', -- 1920x720
+        launchImage = 'Icon-tvOS-Launch.png' -- 1920x1080
+    },
     excludeFiles = {
-        all = {'icon1024.png', '*.keystore'},
-        iphone = {'Icon-*dpi.png'},
+        all = {
+            'icon1024.png',
+            'icon1024-iOS.png',
+            '*.keystore',
+            'maps/*.tmx'},
+        iphone = {
+            'Banner*.png',
+            'Icon*dpi.png',
+            'Icon-tvOS*.png',
+            'Icon*.ico',
+            'Icon*.icns'
+        },
+        tvos = {
+            'launchscreen.nib',
+            'Banner*.png',
+            'Default*.png',
+            'Icon*.png',
+            'Icon*.ico',
+            'Icon*.icns'
+        },
         android = {
+            'launchscreen.nib',
+            'Default*.png',
             'Icon.png',
             'Icon@2x.png',
             'Icon-Small-40.png',
@@ -51,9 +93,35 @@ settings = {
             'Icon-Small-50.png',
             'Icon-Small-50@2x.png',
             'Icon-Small.png',
-            'Icon-Small@2x.png'}
+            'Icon-Small@2x.png',
+            'Icon-tvOS*.png',
+            'Icon*.ico',
+            'Icon*.icns'
+        },
+        osx = {
+            'launchscreen.nib',
+            'Banner*.png',
+            'Default*.png',
+            'Icon*.png',
+            'Icon*.ico'
+        },
+        win32 = {
+            'launchscreen.nib',
+            'Banner*.png',
+            'Default*.png',
+            'Icon*.png',
+            'Icon*.icns'
+        }
+    },
+    window = {
+        defaultMode = 'fullscreen',
+        defaultViewWidth = 1280,
+        defaultViewHeight = 720,
+        minViewWidth = 1280,
+        minViewHeight = 720
     },
     plugins = {
+        ['plugin.iCloud'] = {publisherId = 'com.coronalabs', supportedPlatforms = {iphone = true, appletvos = true, ['iphone-sim'] = true, osx = true}},
         ['plugin.bit'] = {publisherId = 'com.coronalabs'} -- Needed for Tiled loader
     }
 }

@@ -7,6 +7,7 @@ local physics = require('physics') -- Box2D physics
 local widget = require('widget') -- Buttons
 local controller = require('libs.controller') -- Gamepad support
 local databox = require('libs.databox') -- Persistant storage, track level completion and settings
+local eachframe = require('libs.eachframe') -- enterFrame manager
 local sounds = require('libs.sounds') -- Music and sounds manager
 local tiled = require('libs.tiled') -- Tiled map loader
 
@@ -103,7 +104,7 @@ function scene:create(event)
 
 	sidebar:toFront()
 
-	controller.setVisualButtons()
+	controller.setVisualButtons() -- No on-screen buttons, that can be navigated to with a controller
 	-- Map movement on gamepad left stick
 	controller.onMotion = function(name, value)
 		if not self.isPaused then
@@ -121,10 +122,12 @@ function scene:create(event)
 			if self.cannon.ball and not self.cannon.ball.isLaunched then
 				self.map:snapCameraTo(self.cannon)
 			end
-			if name == 'x' then
-				self.cannon.radiusIncrement = value
-			elseif name == 'y' then
-				self.cannon.rotationIncrement = value
+			if math.abs(value) >= 0.05 then
+				if name == 'x' then
+					self.cannon.radiusIncrement = value
+				elseif name == 'y' then
+					self.cannon.rotationIncrement = value
+				end
 			end
 		end
 	end
@@ -137,28 +140,45 @@ function scene:create(event)
 			elseif keyType == 'pause' then
 				pauseButton._view._onRelease()
 			elseif keyType == 'switch' then
-				-- switch for tvOS
+				-- Switch for tvOS, because it has only one touchpad (axis)
 				controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
 			end
 		end
 	end
+
+	eachframe.add(self) -- Each frame self:eachFrame() is called
 
 	-- Only check once in a while for level end
 	self.endLevelCheckTimer = timer.performWithDelay(2000, function()
 		self:endLevelCheck()
 	end, 0)
 
+	if not databox.isHelpShown then
+		timer.performWithDelay(2500, function()
+			sidebar:show()
+			self:setIsPaused(true)
+		end)
+	end
+
 	sounds.playStream('game_music')
 end
 
--- Count bugs and see if all are debugged
-function scene:getBugsCount()
-	for i = #self.bugs, 1, -1 do
-		if not self.bugs[i].isAlive then
-			table.remove(self.bugs, i)
+-- Check for bugs and blocks being dead or outside the borders
+function scene:eachFrame()
+	local tables = {self.bugs, self.blocks}
+	for i = 1, #tables do
+		local t = tables[i]
+		for j = #t, 1, -1 do
+			local b = t[i]
+			if b.isAlive then
+				if b.x < 0 or b.x > self.map.map.tilewidth * self.map.map.width or b.y > self.map.map.tilewidth * self.map.map.height then
+					b:destroy()
+				end
+			else
+				table.remove(t, i)
+			end
 		end
 	end
-	return #self.bugs
 end
 
 function scene:setIsPaused(isPaused)
@@ -174,7 +194,7 @@ end
 -- Check if the player won or lost
 function scene:endLevelCheck()
 	if not self.isPaused then
-		if self:getBugsCount() == 0 then
+		if #self.bugs == 0 then
 			sounds.play('win')
 			self:setIsPaused(true)
 			self.endLevelPopup:show({isWin = true})
@@ -225,6 +245,7 @@ end
 
 -- Clean up
 function scene:destroy()
+	eachframe.remove(self)
 	controller.onMotion = nil
 	controller.onRotation = nil
 	controller.onKey = nil

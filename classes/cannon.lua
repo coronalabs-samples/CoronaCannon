@@ -110,7 +110,7 @@ function _M.newCannon(params)
 
 	function cannon:engageForce()
 		forceArea.isVisible = false
-		self.radius = 0
+		self.forceRadius = 0
 		if self.force > 0 then
 			self:fire()
 		end
@@ -159,8 +159,8 @@ function _M.newCannon(params)
 	-- echFrame() is like enterFrame(), but managed by a library
 	-- Track a launched ball until it stops and load another one
 	function cannon:eachFrame()
-		local step = 5
-	    local damping = 0.98
+		local step = 2
+	    local damping = 0.99
 		if self.ball then
 			if self.ball.isLaunched then
 				local vx, vy = self.ball:getLinearVelocity()
@@ -177,11 +177,11 @@ function _M.newCannon(params)
 				end
 			elseif self.radiusIncrement ~= 0 or self.rotationIncrement ~= 0 then
 		        self.radiusIncrement = self.radiusIncrement * damping
-		        if math.abs(self.radiusIncrement) < 0.1 then
+		        if math.abs(self.radiusIncrement) < 0.5 then
 		            self.radiusIncrement = 0
 		        end
 				self.rotationIncrement = self.rotationIncrement * damping
-		        if math.abs(self.rotationIncrement) < 0.1 then
+		        if math.abs(self.rotationIncrement) < 0.5 then
 		            self.rotationIncrement = 0
 		        end
 				self.forceRadius = self.forceRadius + self.radiusIncrement * step

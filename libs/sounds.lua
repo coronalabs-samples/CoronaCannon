@@ -23,6 +23,7 @@ local sounds = {
 	lose = 'sounds/lose.wav'
 }
 
+-- Reserve two channels for streams and switch between them with a nice fade out / fade in transition
 local audioChannel, otherAudioChannel, currentStreamSound = 1, 2
 function _M.playStream(sound, force)
     if not _M.isMusicOn then return end
@@ -40,6 +41,7 @@ function _M.playStream(sound, force)
 end
 audio.reserveChannels(2)
 
+-- Keep all loaded sounds here
 local loadedSounds = {}
 local function loadSound(sound)
     if not loadedSounds[sound] then

@@ -1,4 +1,5 @@
 local json = require('json')
+local eachframe = require('libs.eachframe')
 
 local _M = {}
 
@@ -7,8 +8,12 @@ _M.axes = {
     y = {type = 'motion', name = 'y'},
     hatX = {type = 'motion', name = 'x'},
     hatY = {type = 'motion', name = 'y'},
+    leftX = {type = 'motion', name = 'x'},
+    leftY = {type = 'motion', name = 'y'},
     z = {type = 'rotation', name = 'x'},
-    rotationZ = {type = 'rotation', name = 'y'}
+    rotationZ = {type = 'rotation', name = 'y'},
+    rightX = {type = 'rotation', name = 'x'},
+    rightY = {type = 'rotation', name = 'y'}
 }
 
 _M.keys = {
@@ -17,20 +22,22 @@ _M.keys = {
     up = {type = 'motion', name = 'y', dir = -1},
     down = {type = 'motion', name = 'y', dir = 1},
     button1 = {type = 'action'},
-    buttonA = {type = 'action'}, -- Apple TV, tap on the touchpad
     space = {type = 'action'},
     enter = {type = 'action'},
     numPadEnter = {type = 'action'},
     escape = {type = 'pause'},
     button2 = {type = 'pause'},
     button9 = {type = 'pause'},
-    buttonX = {type = 'pause'}, -- Apple TV, play/pause button
-    mediaPause = {type = 'switch'} -- Switch map movement/cannon control on Apple TV remote
+    menu = {type = 'pause'}, -- Apple TV, menu button to show pause screen
+    buttonA = {type = 'switch'}, -- Switch map movement/cannon control on Apple TV remote by pressing the touchpad
+    buttonX = {type = 'action'} -- Apple TV, play/pause button to fire the cannnon
 }
 
+-- Navigate to on-screen buttons
 function _M.selectNextVisualButton(axis, dir)
     local self = _M
     local x, y, a = self.activeVisualButton.x, self.activeVisualButton.y, self.activeVisualButton[axis]
+    -- All buttons are sorted and one is choosed by looking at their coordinates and movement from the controller
     local sort = {}
     for i = 1, #self.visualButtons do
         local b = self.visualButtons[i]
@@ -58,6 +65,7 @@ function _M.selectNextVisualButton(axis, dir)
     end
 end
 
+-- Motion is the left stick / D-pad
 function _M.processMotion(name, value)
     local self = _M
     if #self.visualButtons > 0 then
@@ -70,6 +78,7 @@ function _M.processMotion(name, value)
     end
 end
 
+-- Rotation is the right stick
 function _M.processRotation(name, value)
     local self = _M
     if self.onRotation then
@@ -77,6 +86,7 @@ function _M.processRotation(name, value)
     end
 end
 
+-- Apply a visual effect for the selected on-screen button
 function _M.setSelectionEffect(button, isSelected)
     local self = _M
     if not button then
@@ -92,6 +102,15 @@ function _M.setSelectionEffect(button, isSelected)
             self.activeVisualButtonOutline = display.newRoundedRect(self.activeVisualButton.x, self.activeVisualButton.y, self.activeVisualButton.width * edge, self.activeVisualButton.height * edge, 10)
         end
         self.activeVisualButtonOutline:setFillColor(0.5, 1, 0.5, 0.2)
+        local super = self
+        function self.activeVisualButtonOutline:eachFrame()
+            self.x, self.y = super.activeVisualButton.x, super.activeVisualButton.y
+        end
+        eachframe.add(self.activeVisualButtonOutline)
+        function self.activeVisualButtonOutline:finalize()
+            eachframe.remove(self)
+        end
+        self.activeVisualButtonOutline:addEventListener('finalize')
         for i = 1, self.activeVisualButton.parent.numChildren do
             if self.activeVisualButton.parent[i] == self.activeVisualButton then
                 self.activeVisualButton.parent:insert(i, self.activeVisualButtonOutline)
@@ -124,11 +143,13 @@ function _M.deselectVisualButton()
     self.activeVisualButton = nil
 end
 
+-- Return true if there is an active controller
 function _M.isActive()
     local self = _M
     return self.activeDevice ~= nil
 end
 
+-- If some controller sends some data, make it active and select an on-screen button
 function _M.checkActiveDevice(device)
     local self = _M
     if device and not self.activeDevice then
@@ -144,9 +165,13 @@ function _M.checkActiveDevice(device)
     end
 end
 
+-- Check if the currently active controller is disconnected
 function _M.inputDeviceStatus(event)
     local self = _M
-    print(json.prettify(event))
+    if event.device == self.activeDevice and event.device.connectionState == 'disconnected' then
+        self.activeDevice = nil
+        self.deselectVisualButton()
+    end
 end
 
 function _M.getInputDevices()
@@ -154,6 +179,7 @@ function _M.getInputDevices()
     self.devices = system.getInputDevices()
 end
 
+-- Sticks and D-pad
 function _M:axis(event)
     local a = self.axes[event.axis.type]
     self.checkActiveDevice(event.device)
@@ -168,6 +194,7 @@ function _M:axis(event)
     end
 end
 
+-- Controller buttons and keyboard buttons
 function _M:key(event)
     if event.device and not self.activeDevice then
         self.activeDevice = event.device
@@ -199,6 +226,7 @@ function _M:key(event)
     end
 end
 
+-- Tell the library what on-screen buttons are currently available for navigation with a controller
 function _M.setVisualButtons(buttons)
     local self = _M
     self.deselectVisualButton()

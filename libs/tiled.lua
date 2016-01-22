@@ -1,4 +1,6 @@
 -- Tiled maps loading library
+-- This library has basic, but sufficent support of Tiled lua format.
+-- Adjust it according to your usage of Tiled, for example extra layer properties.
 
 local physics = require('physics')
 local bit = require('plugin.bit')
@@ -13,6 +15,7 @@ local FlippedVerticallyFlag     = 0x40000000
 local FlippedGiagonallyFlag     = 0x20000000
 local ClearFlag                 = 0x1FFFFFFF
 
+-- Break full path string into path and filename
 local function extractPath(p)
     local c
     for i = p:len(), 1, -1 do
@@ -23,6 +26,7 @@ local function extractPath(p)
     end
 end
 
+-- Keep a value in boundaries
 local function clamp(value, low, high)
     if value < low then value = low
     elseif high and value > high then value = high end
@@ -30,22 +34,25 @@ local function clamp(value, low, high)
 end
 
 local function load(self, params)
-    self.map = require(params.filename)
-    package.loaded[params.filename] = nil
+    self.map = require(params.filename) -- Actual Tiled data
+    package.loaded[params.filename] = nil -- Remove from memory in case it's updated during runtime
     self.specs = params.specs or {}
 
     self:prepareTilesets()
 
-    self.snapshot = display.newSnapshot(params.g, _W, _H)
+    self.snapshot = display.newSnapshot(params.g, _W, _H) -- All tiles go into this snapshot
     self.snapshot.x, self.snapshot.y = 0, 0
     self.group = self.snapshot.group
     self.snapshot.anchorX, self.snapshot.anchorY = 0, 0
     self.group.x, self.group.y = -self.snapshot.width / 2, -self.snapshot.height / 2
 
-    self.physicsGroup = display.newGroup()
+    self.layers = {} -- Each Tiled layer has it's own group and they are stored here
+
+    self.physicsGroup = display.newGroup() -- A separate group for physics objects
     params.g:insert(self.physicsGroup)
     self.physicsGroup.x, self.physicsGroup.y = self.snapshot.x, self.snapshot.y
 
+    -- A set of properties for the camera
     self.camera = {
         x = 0, y = 0,
         xIncrement = 0, yIncrement = 0,
@@ -53,6 +60,7 @@ local function load(self, params)
         high = {x = self.map.tilewidth * self.map.width - _W, y = self.map.tilewidth * self.map.height - _H}
     }
 
+    -- Tiled provides a background color
     local color = self.map.backgroundcolor
     self.map.backgroundcolor = {color[1] / 255, color[2] / 255, color[3] / 255}
 
@@ -64,6 +72,7 @@ local function load(self, params)
     self.snapshot:addEventListener('finalize')
 end
 
+-- Load all spritesheers into memory
 local function prepareTilesets(self)
     self.tilesets = {}
     self.tileProperties = {}
@@ -119,10 +128,14 @@ local function newTile(self, params)
     local tile
     if sheet then
         tile = display.newImage(params.g, sheet, frameIndex)
+        tile.x, tile.y = (params.x + 0.5) * map.tilewidth, (params.y + 0.5) * map.tileheight
     else
         tile = display.newImageRect(params.g, properties.image, properties.width, properties.height)
+        tile.x, tile.y = params.x * map.tilewidth + properties.width / 2, (params.y + 1) * map.tileheight - properties.height / 2
     end
-    tile.x, tile.y = (params.x + 0.5) * map.tilewidth, (params.y + 0.5) * map.tileheight
+    if params.tint then
+        tile:setFillColor(unpack(params.tint))
+    end
     tile.flip = flip
 
     if flip.xy then
@@ -145,6 +158,7 @@ local function newTile(self, params)
     return tile
 end
 
+-- Objects are rectangles and other polygons from Tiled
 local function newObject(self, params)
     if params.shape == 'rectangle' then
         local rect = display.newRect(params.g, params.x, params.y, params.width, params.height)
@@ -164,12 +178,30 @@ local function newObject(self, params)
     end
 end
 
+-- Iterate each Tiled layer and create all tiles and objects
 local function draw(self)
     local map = self.map
     local w, h = map.width, map.height
     for i = 1, #map.layers do
         local l = map.layers[i]
         if l.type == 'tilelayer' then
+            local groupLayer = display.newGroup()
+            self.group:insert(groupLayer)
+            table.insert(self.layers, groupLayer)
+            if l.properties.ratio then
+                groupLayer.ratio = tonumber(l.properties.ratio)
+            end
+            if l.properties.speed then
+                groupLayer.speed = tonumber(l.properties.speed)
+                groupLayer.xOffset = 0
+            end
+            if l.properties.yFactor then
+                groupLayer.yFactor = tonumber(l.properties.yFactor)
+            end
+            local tint
+            if l.properties.tintR and l.properties.tintG and l.properties.tintB then
+                tint = {tonumber(l.properties.tintR), tonumber(l.properties.tintG), tonumber(l.properties.tintB)}
+            end
             local d = l.data
             local gid
             for y = 0, h - 1 do
@@ -178,8 +210,10 @@ local function draw(self)
                     if gid > 0 then
                         self:newTile{
                             gid = gid,
-                            g = self.group,
-                            x = x, y = y}
+                            g = groupLayer,
+                            x = x, y = y,
+                            tint = tint
+                        }
                     end
                 end
             end
@@ -195,43 +229,21 @@ local function draw(self)
             end
         end
     end
-    self.snapshot:invalidate()
 end
 
 local function moveCamera(self, x, y)
     self.camera.x = clamp(x, self.camera.low.x, self.camera.high.x)
     self.camera.y = clamp(y, self.camera.low.y, self.camera.high.y)
-    local toX, toY = -self.camera.x - _CX, -self.camera.y - _CY
-    if self.group.x ~= toX or self.group.y ~= toY then
-        self.group.x, self.group.y = toX, toY
-        self.physicsGroup.x, self.physicsGroup.y = self.group.x + _CX, self.group.y + _CY
-        self.snapshot:invalidate()
-    end
 end
 
 local function moveCameraSmoothly(self, params)
-    local mt = {}
-    function mt.__index(t, k)
-        if k == 'x' then
-            return t._x
-        elseif k == 'y' then
-            return t._y
-        end
-    end
-    function mt.__newindex(t, k, value)
-        if k == 'x' then
-            t._x = value
-        elseif k == 'y' then
-            t._y = value
-        end
-        if self.snapshot.invalidate then
-            self:moveCamera(t._x, t._y)
-        end
-    end
-
-    local t = {_x = self.camera.x, _y = self.camera.y}
-    setmetatable(t, mt)
-    self.smoothMovementTransition = transition.to(t, {x = params.x, y = params.y, time = params.time or 1000, delay = params.delay or 0, transition = easing.inOutExpo})
+    self.smoothMovementTransition = transition.to(self.camera, {
+        x = clamp(params.x, self.camera.low.x, self.camera.high.x),
+        y = clamp(params.y, self.camera.low.y, self.camera.high.y),
+        time = params.time or 1000,
+        delay = params.delay or 0,
+        transition = easing.inOutExpo
+    })
 end
 
 local function snapCameraTo(self, object)
@@ -243,15 +255,16 @@ local function snapCameraTo(self, object)
 end
 
 local function eachFrame(self)
-    local step = 50
+    -- Modify camera position
+    local step = 30
     local damping = 0.98
     if self.camera.xIncrement ~= 0 or self.camera.yIncrement ~= 0 then
         self.camera.xIncrement = self.camera.xIncrement * damping
-        if math.abs(self.camera.xIncrement) < 0.1 then
+        if math.abs(self.camera.xIncrement) < 0.5 then
             self.camera.xIncrement = 0
         end
         self.camera.yIncrement = self.camera.yIncrement * damping
-        if math.abs(self.camera.yIncrement) < 0.1 then
+        if math.abs(self.camera.yIncrement) < 0.5 then
             self.camera.yIncrement = 0
         end
         self:moveCamera(self.camera.x + self.camera.xIncrement * step, self.camera.y + self.camera.yIncrement * step)
@@ -267,6 +280,33 @@ local function eachFrame(self)
             self.camera.snappedObject = nil
         end
     end
+
+    -- Adjust layers positions according to the camera
+    self.group.x, self.group.y = -self.camera.x - _CX, -self.camera.y - _CY
+    self.physicsGroup.x, self.physicsGroup.y = -self.camera.x, -self.camera.y
+    for i = 1, #self.layers do
+        local l = self.layers[i]
+        if l.ratio then
+            l.x = self.camera.x - self.camera.x * l.ratio
+            if l.speed then
+                for j = 1, l.numChildren do
+                    local object = l[j]
+                    local speed = l.speed
+                    if l.yFactor then
+                        speed = speed / (l.yFactor * object.y / self.map.tileheight)
+                    end
+                    object.x = object.x + speed
+                    if object.x > self.map.width * self.map.tilewidth + object.width then
+                        object.x = object.x - self.map.width * self.map.tilewidth - 2 * object.width
+                    elseif object.x < -object.width then
+                        object.x = object.x + self.map.width * self.map.tilewidth + object.width
+                    end
+                end
+            end
+        end
+    end
+
+    self.snapshot:invalidate()
 end
 
 local function mapXYToPixels(self, x, y)
