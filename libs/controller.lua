@@ -47,8 +47,8 @@ function _M.selectNextVisualButton(axis, dir)
         end
     end
     if #sort > 0 then
-        table.sort(sort, function(a, b)
-            return a.axisDistance < b.axisDistance
+        table.sort(sort, function(e1, e2)
+            return e1.axisDistance < e2.axisDistance
         end)
         local axisDistance = sort[1].axisDistance
         for i = #sort, 1, -1 do
@@ -57,8 +57,8 @@ function _M.selectNextVisualButton(axis, dir)
                 table.remove(sort, i)
             end
         end
-        table.sort(sort, function(a, b)
-            return a.distance < b.distance
+        table.sort(sort, function(e1, e2)
+            return e1.distance < e2.distance
         end)
         self.selectVisualButton(sort[1].index)
     end

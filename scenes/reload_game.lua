@@ -8,7 +8,7 @@ local _CX, _CY = display.contentCenterX, display.contentCenterY
 
 local scene = composer.newScene()
 
-function scene:create(event)
+function scene:create()
     local group = self.view
 
     local background = display.newRect(group, _CX, _CY, _W, _H)

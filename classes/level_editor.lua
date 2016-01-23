@@ -1,5 +1,6 @@
 -- Level Editor
 -- Extends scenes/game.lua, classes/bug.lua and classes/block.lua to support visual level editing.
+local physics = require('physics')
 
 local _M = {}
 

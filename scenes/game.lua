@@ -140,7 +140,6 @@ function scene:create(event)
 					-- Switch for tvOS, because it has only one touchpad (axis)
 					controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
 				else
-					cannonControllerRadius = 0
 					self.cannon:engageForce()
 				end
 			elseif keyType == 'pause' then
@@ -162,7 +161,7 @@ function scene:show(event)
 		-- Show help image once
 		if not databox.isHelpShown then
 			timer.performWithDelay(2500, function()
-				sidebar:show()
+				self.sidebar:show()
 				self:setIsPaused(true)
 			end)
 		end
@@ -227,7 +226,6 @@ function scene:createTouchRect(params)
 	local touchRect = display.newRect(group, _CX, _CY, _W, _H)
 	touchRect.isVisible = false
 
-	local super = self
 	function touchRect:touch(event)
 		if event.phase == 'began' then
 			display.getCurrentStage():setFocus(self, event.id)

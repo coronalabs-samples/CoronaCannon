@@ -8,7 +8,6 @@ local sounds = require('libs.sounds')
 
 local _M = {}
 
-local _W, _H = display.actualContentWidth, display.actualContentHeight
 local _CX, _CY = display.contentCenterX, display.contentCenterY
 
 local newShade = require('classes.shade').newShade
