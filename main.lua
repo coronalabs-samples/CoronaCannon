@@ -35,10 +35,10 @@ local composer = require('composer')
 composer.recycleOnSceneChange = true -- Automatically remove scenes from memory
 composer.setVariable('levelCount', 10) -- Set how many levels there are under levels/ directory
 
--- Add support for back button on Android
+-- Add support for back button on Android and Window Phone
 -- When it's pressed, check if current scene has a special field gotoPreviousScene
 -- If it's a function - call it, if it's true - go back automatically, if it's a string - go back to the specified scene
-if platform == 'Android' then
+if platform == 'Android' or platform == 'WinPhone' then
 	Runtime:addEventListener('key', function(event)
 		if event.phase == 'down' and event.keyName == 'back' then
 			local scene = composer.getScene(composer.getSceneName('current'))
@@ -48,9 +48,6 @@ if platform == 'Android' then
                 	return true
 				elseif type(scene.gotoPreviousScene) == 'string' then
 					composer.gotoScene(scene.gotoPreviousScene, {time = 500, effect = 'slideRight'})
-					return true
-				elseif scene.gotoPreviousScene == true then
-					composer.gotoScene(composer.getSceneName('previous'), {time = 500, effect = 'slideRight'})
 					return true
 				end
             end

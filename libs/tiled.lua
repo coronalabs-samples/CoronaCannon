@@ -260,11 +260,11 @@ local function eachFrame(self)
     local damping = 0.98
     if self.camera.xIncrement ~= 0 or self.camera.yIncrement ~= 0 then
         self.camera.xIncrement = self.camera.xIncrement * damping
-        if math.abs(self.camera.xIncrement) < 0.5 then
+        if math.abs(self.camera.xIncrement) < 0.02 then
             self.camera.xIncrement = 0
         end
         self.camera.yIncrement = self.camera.yIncrement * damping
-        if math.abs(self.camera.yIncrement) < 0.5 then
+        if math.abs(self.camera.yIncrement) < 0.02 then
             self.camera.yIncrement = 0
         end
         self:moveCamera(self.camera.x + self.camera.xIncrement * step, self.camera.y + self.camera.yIncrement * step)

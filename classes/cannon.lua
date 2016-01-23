@@ -177,11 +177,11 @@ function _M.newCannon(params)
 				end
 			elseif self.radiusIncrement ~= 0 or self.rotationIncrement ~= 0 then
 		        self.radiusIncrement = self.radiusIncrement * damping
-		        if math.abs(self.radiusIncrement) < 0.5 then
+		        if math.abs(self.radiusIncrement) < 0.02 then
 		            self.radiusIncrement = 0
 		        end
 				self.rotationIncrement = self.rotationIncrement * damping
-		        if math.abs(self.rotationIncrement) < 0.5 then
+		        if math.abs(self.rotationIncrement) < 0.02 then
 		            self.rotationIncrement = 0
 		        end
 				self.forceRadius = self.forceRadius + self.radiusIncrement * step

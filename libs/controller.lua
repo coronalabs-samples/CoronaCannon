@@ -28,7 +28,7 @@ _M.keys = {
     button2 = {type = 'pause'},
     button9 = {type = 'pause'},
     menu = {type = 'pause'}, -- Apple TV, menu button to show pause screen
-    buttonA = {type = 'switch'}, -- Switch map movement/cannon control on Apple TV remote by pressing the touchpad
+    buttonA = {type = 'action'}, -- Switch map movement/cannon control on Apple TV remote by pressing the touchpad
     buttonX = {type = 'action'} -- Apple TV, play/pause button to fire the cannnon
 }
 

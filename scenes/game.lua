@@ -123,7 +123,7 @@ function scene:create(event)
 			if self.cannon.ball and not self.cannon.ball.isLaunched then
 				self.map:snapCameraTo(self.cannon)
 			end
-			if math.abs(value) >= 0.05 then
+			if math.abs(value) >= 0.08 or math.abs(value) < 0.02 then
 				if name == 'x' then
 					self.cannon.radiusIncrement = value
 				elseif name == 'y' then
@@ -136,13 +136,15 @@ function scene:create(event)
 	controller.onKey = function(keyName, keyType)
 		if not self.isPaused then
 			if keyType == 'action' then
-				cannonControllerRadius = 0
-				self.cannon:engageForce()
+				if keyName == 'buttonA' then
+					-- Switch for tvOS, because it has only one touchpad (axis)
+					controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
+				else
+					cannonControllerRadius = 0
+					self.cannon:engageForce()
+				end
 			elseif keyType == 'pause' then
 				pauseButton._view._onRelease()
-			elseif keyType == 'switch' then
-				-- Switch for tvOS, because it has only one touchpad (axis)
-				controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
 			end
 		end
 	end
@@ -249,7 +251,7 @@ function scene:createTouchRect(params)
 	end)
 end
 
--- Android's back button action
+-- Device's back button action
 function scene:gotoPreviousScene()
 	native.showAlert('Corona Cannon', 'Are you sure you want to exit this level?', {'Yes', 'Cancel'}, function(event)
 		if event.action == 'clicked' and event.index == 1 then
