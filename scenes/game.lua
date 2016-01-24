@@ -75,7 +75,7 @@ function scene:create(event)
 
 	-- Preload End Level Popup and Sidebar
 	self.endLevelPopup = newEndLevelPopup({g = group, levelId = self.levelId})
-	local sidebar = newSidebar({g = group, levelId = self.levelId, onHide = function()
+	self.sidebar = newSidebar({g = group, levelId = self.levelId, onHide = function()
 		self:setIsPaused(false)
 		controller.setVisualButtons()
 	end})
@@ -96,14 +96,14 @@ function scene:create(event)
 		x = 16, y = 16,
 		onRelease = function()
 			sounds.play('tap')
-			sidebar:show()
+			self.sidebar:show()
 			self:setIsPaused(true)
 		end
 	})
 	pauseButton.anchorX, pauseButton.anchorY = 0, 0
 	group:insert(pauseButton)
 
-	sidebar:toFront()
+	self.sidebar:toFront()
 
 	controller.setVisualButtons() -- No on-screen buttons, that can be navigated to with a controller
 	-- Map movement on gamepad left stick
