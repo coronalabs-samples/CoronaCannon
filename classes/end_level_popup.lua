@@ -5,10 +5,9 @@ local composer = require('composer')
 local widget = require('widget')
 local controller = require('libs.controller')
 local sounds = require('libs.sounds')
+local relayout = require('libs.relayout')
 
 local _M = {}
-
-local _CX, _CY = display.contentCenterX, display.contentCenterY
 
 local newShade = require('classes.shade').newShade
 
@@ -17,7 +16,7 @@ function _M.newEndLevelPopup(params)
 	params.g:insert(popup)
 
 	local background = display.newImageRect(popup, 'images/end_level.png', 480, 480)
-	popup.x, popup.y = _CX, -background.height
+	popup.x, popup.y = relayout._CX, -background.height
 
 	local visualButtons = {}
 
@@ -87,7 +86,10 @@ function _M.newEndLevelPopup(params)
 		end
 
 		controller.setVisualButtons(visualButtons)
-		transition.to(self, {time = 250, y = _CY, transition = easing.outExpo})
+		self.x = relayout._CX
+		transition.to(self, {time = 250, y = relayout._CY, transition = easing.outExpo, onComplete = function()
+			relayout.add(self)
+		end})
 	end
 
 	return popup

@@ -2,13 +2,12 @@
 -- Shades the background group and makes it impossible to touch.
 -- Used to show the sidebar or the end level popup.
 
+local relayout = require('libs.relayout')
+
 local _M = {}
 
-local _W, _H = display.actualContentWidth, display.actualContentHeight
-local _CX, _CY = display.contentCenterX, display.contentCenterY
-
 function _M.newShade(group)
-	local shade = display.newRect(group, _CX, _CY, _W, _H)
+	local shade = display.newRect(group, relayout._CX, relayout._CY, relayout._W, relayout._H)
 	shade:setFillColor(0)
 	shade.alpha = 0
 	transition.to(shade, {time = 200, alpha = 0.5})
@@ -30,6 +29,8 @@ function _M.newShade(group)
 			object:removeSelf()
 		end})
 	end
+
+	relayout.add(shade)
 
 	return shade
 end

@@ -10,13 +10,10 @@ local databox = require('libs.databox') -- Persistant storage, track level compl
 local eachframe = require('libs.eachframe') -- enterFrame manager
 local sounds = require('libs.sounds') -- Music and sounds manager
 local tiled = require('libs.tiled') -- Tiled map loader
+local relayout = require('libs.relayout') -- Repositions elements on screen on window resize
 
 physics.start()
 physics.setGravity(0, 20) -- Default gravity is too boring
-
--- Short names for these crucial, but long variables
-local _W, _H = display.actualContentWidth, display.actualContentHeight
-local _CX, _CY = display.contentCenterX, display.contentCenterY
 
 local scene = composer.newScene()
 
@@ -31,6 +28,8 @@ local newSidebar = require('classes.sidebar').newSidebar -- Settings and pause s
 local newEndLevelPopup = require('classes.end_level_popup').newEndLevelPopup -- Win/Lose dialog windows
 
 function scene:create(event)
+	local _W, _H, _CX, _CY = relayout._W, relayout._H, relayout._CX, relayout._CY
+
 	local group = self.view
 	self.levelId = event.params
 	self.level = require('levels.' .. self.levelId)
@@ -40,6 +39,7 @@ function scene:create(event)
 	    color1 = {0.2, 0.45, 0.8},
 	    color2 = {0.7, 0.8, 1}
 	}
+	relayout.add(background)
 
 	-- The central element - Tiled map
 	self.map = tiled.newTiledMap({g = group, filename = 'maps.' .. self.level.map})
@@ -88,6 +88,7 @@ function scene:create(event)
 		fontSize = 32
 	})
 	levelLabel.anchorX, levelLabel.anchorY = 1, 0
+	relayout.add(levelLabel)
 
 	local pauseButton = widget.newButton({
 		defaultFile = 'images/buttons/pause.png',
@@ -102,6 +103,7 @@ function scene:create(event)
 	})
 	pauseButton.anchorX, pauseButton.anchorY = 0, 0
 	group:insert(pauseButton)
+	relayout.add(pauseButton)
 
 	self.sidebar:toFront()
 
@@ -147,6 +149,7 @@ function scene:create(event)
 			end
 		end
 	end
+
 end
 
 function scene:show(event)
@@ -176,13 +179,13 @@ function scene:eachFrame()
 	for i = 1, #tables do
 		local t = tables[i]
 		for j = #t, 1, -1 do
-			local b = t[i]
+			local b = t[j]
 			if b.isAlive then
 				if b.x < 0 or b.x > self.map.map.tilewidth * self.map.map.width or b.y > self.map.map.tilewidth * self.map.map.height then
 					b:destroy()
 				end
 			else
-				table.remove(t, i)
+				table.remove(t, j)
 			end
 		end
 	end
@@ -220,11 +223,14 @@ end
 
 -- Touch to pan the map
 function scene:createTouchRect(params)
+	local _W, _H, _CX, _CY = relayout._W, relayout._H, relayout._CX, relayout._CY
+
 	local group = self.view
 	local map = self.map
 	local delay = params.delay or 1
 	local touchRect = display.newRect(group, _CX, _CY, _W, _H)
 	touchRect.isVisible = false
+	relayout.add(touchRect)
 
 	function touchRect:touch(event)
 		if event.phase == 'began' then

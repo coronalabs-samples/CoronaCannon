@@ -6,13 +6,13 @@ local widget = require('widget')
 local controller = require('libs.controller')
 local databox = require('libs.databox')
 local sounds = require('libs.sounds')
-
-local _W, _H = display.actualContentWidth, display.actualContentHeight
-local _CX, _CY = display.contentCenterX, display.contentCenterY
+local relayout = require('libs.relayout')
 
 local scene = composer.newScene()
 
 function scene:create()
+	local _W, _H, _CX, _CY = relayout._W, relayout._H, relayout._CX, relayout._CY
+
 	local group = self.view
 
 	local background = display.newRect(group, _CX, _CY, _W, _H)
@@ -21,8 +21,14 @@ function scene:create()
 	    color1 = {0.8, 0.45, 0.2},
 	    color2 = {1, 0.8, 0.7}
 	}
+	relayout.add(background)
 
 	local visualButtons = {}
+
+	local buttonsGroup = display.newGroup()
+	buttonsGroup.x, buttonsGroup.y = _CX, 0
+	group:insert(buttonsGroup)
+	relayout.add(buttonsGroup)
 
 	local function onLevelButtonRelease(event)
 		sounds.play('tap')
@@ -43,10 +49,10 @@ function scene:create()
 			defaultFile = 'images/buttons/level.png',
 			overFile = 'images/buttons/level-over.png',
 			width = 160, height = 175,
-			x = _CX + x * spacing, y = 32 + y * spacing + 87,
+			x = x * spacing, y = 32 + y * spacing + 87,
 			onRelease = onLevelButtonRelease
 		})
-		group:insert(button)
+		buttonsGroup:insert(button)
 		table.insert(visualButtons, button)
 
 		-- Check if this level was completed

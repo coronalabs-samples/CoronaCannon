@@ -118,7 +118,10 @@ settings = {
         defaultViewWidth = 1280,
         defaultViewHeight = 720,
         minViewWidth = 1280,
-        minViewHeight = 720
+        minViewHeight = 720,
+        --enableMaximizeButton = true,
+        --resizable = true,
+        titleText = {default = 'Corona Cannon'}
     },
     plugins = {
         ['plugin.iCloud'] = {publisherId = 'com.coronalabs', supportedPlatforms = {iphone = true, appletvos = true, ['iphone-sim'] = true, osx = true}},

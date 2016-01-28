@@ -7,15 +7,15 @@ local widget = require('widget')
 local controller = require('libs.controller')
 local databox = require('libs.databox')
 local sounds = require('libs.sounds')
+local relayout = require('libs.relayout')
 
 local _M = {}
-
-local _W = display.actualContentWidth
-local _CX, _CY = display.contentCenterX, display.contentCenterY
 
 local newShade = require('classes.shade').newShade
 
 function _M.newSidebar(params)
+	local _W, _CX, _CY = relayout._W, relayout._CX, relayout._CY
+
 	local sidebar = display.newGroup()
 	params.g:insert(sidebar)
 
@@ -231,6 +231,16 @@ function _M.newSidebar(params)
 		touchScreenHelp.isVisible = false
 		transition.to(self, {time = 250, x = -background.width, transition = easing.outExpo, onComplete = params.onHide})
 	end
+
+	function sidebar:relayout()
+		sidebar.y = relayout._CY
+		appleTvRemoteHelp.x = relayout._CX - background.width / 2
+		gamepadHelp.x = appleTvRemoteHelp.x
+		touchScreenHelp.x = appleTvRemoteHelp.x
+		badge.x = relayout._W - background.width / 2 - 16
+	end
+
+	relayout.add(sidebar)
 
 	return sidebar
 end

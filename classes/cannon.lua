@@ -3,8 +3,7 @@
 
 local eachframe = require('libs.eachframe')
 local sounds = require('libs.sounds')
-
-local _CX, _CY = display.contentCenterX, display.contentCenterY
+local relayout = require('libs.relayout')
 
 local _M = {}
 
@@ -170,7 +169,7 @@ function _M.newCannon(params)
 					self.ball:destroy()
 					self.ball = nil
 					self:load()
-					map:moveCameraSmoothly({x = self.x - _CX, y = self.y - _CY, time = 1000, delay = 500})
+					map:moveCameraSmoothly({x = self.x - relayout._CX, y = self.y - relayout._CY, time = 1000, delay = 500})
 				elseif not self.isPaused then
 					self:addTrajectoryPoint()
 				end

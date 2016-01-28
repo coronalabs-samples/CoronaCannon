@@ -6,9 +6,7 @@ local physics = require('physics')
 local bit = require('plugin.bit')
 
 local eachframe = require('libs.eachframe')
-
-local _W, _H = display.actualContentWidth, display.actualContentHeight
-local _CX, _CY = display.contentCenterX, display.contentCenterY
+local relayout = require('libs.relayout')
 
 local FlippedHorizontallyFlag   = 0x80000000
 local FlippedVerticallyFlag     = 0x40000000
@@ -34,6 +32,8 @@ local function clamp(value, low, high)
 end
 
 local function load(self, params)
+    local _W, _H = relayout._W, relayout._H
+
     self.map = require(params.filename) -- Actual Tiled data
     package.loaded[params.filename] = nil -- Remove from memory in case it's updated during runtime
     self.specs = params.specs or {}
@@ -45,6 +45,14 @@ local function load(self, params)
     self.group = self.snapshot.group
     self.snapshot.anchorX, self.snapshot.anchorY = 0, 0
     self.group.x, self.group.y = -self.snapshot.width / 2, -self.snapshot.height / 2
+
+    local super = self
+    function self.snapshot:relayout()
+        self.width, self.height = relayout._W, relayout._H
+        super.camera.high = {x = super.map.tilewidth * super.map.width - relayout._W, y = super.map.tilewidth * super.map.height - relayout._H}
+        super:moveCamera(super.camera.x, super.camera.y)
+    end
+    relayout.add(self.snapshot)
 
     self.layers = {} -- Each Tiled layer has it's own group and they are stored here
 
@@ -65,9 +73,9 @@ local function load(self, params)
     self.map.backgroundcolor = {color[1] / 255, color[2] / 255, color[3] / 255}
 
     eachframe.add(self)
-    local super = self
     function self.snapshot:finalize()
         eachframe.remove(super)
+        relayout.remove(self)
     end
     self.snapshot:addEventListener('finalize')
 end
@@ -256,6 +264,7 @@ end
 
 local function eachFrame(self)
     -- Modify camera position
+    local _W, _H, _CX, _CY = relayout._W, relayout._H, relayout._CX, relayout._CY
     local step = 30
     local damping = 0.98
     if self.camera.xIncrement ~= 0 or self.camera.yIncrement ~= 0 then

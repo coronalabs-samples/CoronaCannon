@@ -5,9 +5,7 @@ local composer = require('composer')
 local widget = require('widget')
 local controller = require('libs.controller')
 local sounds = require('libs.sounds')
-
-local _W, _H = display.actualContentWidth, display.actualContentHeight
-local _CX, _CY = display.contentCenterX, display.contentCenterY
+local relayout = require('libs.relayout')
 
 local scene = composer.newScene()
 
@@ -15,6 +13,8 @@ local scene = composer.newScene()
 local newSidebar = require('classes.sidebar').newSidebar
 
 function scene:create()
+	local _W, _H, _CX, _CY = relayout._W, relayout._H, relayout._CX, relayout._CY
+
 	local group = self.view
 
 	local background = display.newRect(group, _CX, _CY, _W, _H)
@@ -23,12 +23,18 @@ function scene:create()
 	    color1 = {0.2, 0.45, 0.8},
 	    color2 = {0.7, 0.8, 1}
 	}
+	relayout.add(background)
 
-	local tower = display.newImageRect(group, 'images/tower.png', 192, 256)
+	local bottomGroup = display.newGroup()
+	bottomGroup.x, bottomGroup.y = _CX, _H
+	group:insert(bottomGroup)
+	relayout.add(bottomGroup)
+
+	local tower = display.newImageRect(bottomGroup, 'images/tower.png', 192, 256)
 	tower.anchorY = 1
-	tower.x, tower.y = _W * 0.33, _H - 64
+	tower.x, tower.y = -_W * 0.17, -64
 
-	local cannon = display.newImageRect(group, 'images/cannon.png', 128, 64)
+	local cannon = display.newImageRect(bottomGroup, 'images/cannon.png', 128, 64)
 	cannon.anchorX = 0.25
 	cannon.x, cannon.y = tower.x, tower.y - 256
 
@@ -36,17 +42,22 @@ function scene:create()
 	transition.to(cannon, {time = 4000, rotation = -180, iterations = 0, transition = easing.continuousLoop})
 
 	local numTiles = math.ceil(_W / 64 / 2)
-	for i = -numTiles, numTiles do
-		local tile = display.newImageRect(group, 'images/green_tiles/3.png', 64, 64)
+	for i = -numTiles - 4, numTiles + 4 do -- Add extra 4 on the sides for resize events
+		local tile = display.newImageRect(bottomGroup, 'images/green_tiles/3.png', 64, 64)
 		tile.anchorY = 1
-		tile.x, tile.y = _CX + i * 64, _H
+		tile.x, tile.y = i * 64, 0
 	end
+
+	local titleGroup = display.newGroup()
+	titleGroup.x, titleGroup.y = _CX, 128
+	group:insert(titleGroup)
+	relayout.add(titleGroup)
 
 	local title = 'CORONA CANNON'
 	local j = 1
 	for i = -6, 6 do
 		local character = display.newGroup()
-		group:insert(character)
+		titleGroup:insert(character)
 		local rect = display.newRect(character, 0, 0, 64, 64)
 		rect.strokeWidth = 2
 		rect:setFillColor(0.2)
@@ -61,7 +72,7 @@ function scene:create()
 		})
 		text:setFillColor(0.8, 0.5, 0.2)
 
-		character.x, character.y = _CX + i * 72, 128
+		character.x, character.y = i * 72, 0
 		transition.from(character, {time = 500, delay = 100 * j, y = _H + 100, transition = easing.outExpo})
 		j = j + 1
 	end
@@ -78,8 +89,10 @@ function scene:create()
 	})
 	group:insert(self.playButton)
 
-	transition.to(self.playButton, {time = 1200, delay = 500, y = _H - 128 - self.playButton.height / 2, transition = easing.inExpo, onComplete = function(object)
-		transition.to(object, {time = 800, x = _W - 64 - self.playButton.width / 2, transition = easing.outExpo})
+	transition.to(self.playButton, {time = 1200, delay = 500, y = _H - 128 - self.playButton.height / 2, transition = easing.inExpo, onComplete = function(object1)
+		transition.to(object1, {time = 800, x = _W - 64 - self.playButton.width / 2, transition = easing.outExpo, onComplete = function(object2)
+			relayout.add(object2)
+		end})
 	end})
 
 	local sidebar = newSidebar({g = group, onHide = function()
@@ -98,6 +111,7 @@ function scene:create()
 	})
 	self.settingsButton.isRound = true
 	group:insert(self.settingsButton)
+	relayout.add(self.settingsButton)
 
 	self:setVisualButtons()
 	sounds.playStream('menu_music')

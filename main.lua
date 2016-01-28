@@ -13,6 +13,11 @@ if platform == 'tvOS' then
 	system.setIdleTimer(false)
 end
 
+-- Hide navigation bar on Android
+if platform == 'Android' then
+	native.setProperty('androidSystemUiVisibility', 'immersiveSticky')
+end
+
 -- Exit and enter fullscreen mode
 -- CMD+CTRL+F on OS X
 -- F11 or ALT+ENTER on Windows
@@ -76,6 +81,8 @@ databox({
 local sounds = require('libs.sounds')
 sounds.isSoundOn = databox.isSoundOn
 sounds.isMusicOn = databox.isMusicOn
+
+require('libs.relayout')
 
 -- Show menu scene
 composer.gotoScene('scenes.menu')
