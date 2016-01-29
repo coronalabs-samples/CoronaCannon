@@ -42,7 +42,7 @@ composer.setVariable('levelCount', 10) -- Set how many levels there are under le
 
 -- Add support for back button on Android and Window Phone
 -- When it's pressed, check if current scene has a special field gotoPreviousScene
--- If it's a function - call it, if it's true - go back automatically, if it's a string - go back to the specified scene
+-- If it's a function - call it, if it's a string - go back to the specified scene
 if platform == 'Android' or platform == 'WinPhone' then
 	Runtime:addEventListener('key', function(event)
 		if event.phase == 'down' and event.keyName == 'back' then
@@ -64,7 +64,7 @@ end
 -- to reduce battery consumption.
 -- The above cases are fine to use anonymous listeners because we don't need to remove them ever.
 
--- Add support for controllers so the game is playable on Android TV and Apple TV
+-- Add support for controllers so the game is playable on Android TV, Apple TV and with a MFi controller
 require('libs.controller') -- Activate by requiring
 
 -- This library automatically loads and saves it's storage into databox.json inside Documents directory
@@ -82,6 +82,7 @@ local sounds = require('libs.sounds')
 sounds.isSoundOn = databox.isSoundOn
 sounds.isMusicOn = databox.isMusicOn
 
+-- This library helps position elements on the screen during the resize event
 require('libs.relayout')
 
 -- Show menu scene
