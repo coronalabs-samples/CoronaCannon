@@ -55,64 +55,6 @@ settings = {
         topShelfImage = 'Icon-tvOS-TopShelf.png', -- 1920x720
         launchImage = 'Icon-tvOS-Launch.png' -- 1920x1080
     },
-    excludeFiles = {
-        all = {
-            'icon1024.png',
-            'icon1024-iOS.png',
-            '*.keystore',
-            'maps/*.tmx'},
-        iphone = {
-            'Banner*.png',
-            'Icon*dpi.png',
-            'Icon-tvOS*.png',
-            'Icon*.ico',
-            'Icon*.icns'
-        },
-        tvos = {
-            'launchscreen.nib',
-            'Banner*.png',
-            'Default*.png',
-            'Icon*.png',
-            'Icon*.ico',
-            'Icon*.icns'
-        },
-        android = {
-            'launchscreen.nib',
-            'Default*.png',
-            'Icon.png',
-            'Icon@2x.png',
-            'Icon-Small-40.png',
-            'Icon-Small-40@2x.png',
-            'Icon-60.png',
-            'Icon-60@2x.png',
-            'Icon-60@3x.png',
-            'Icon-72.png',
-            'Icon-72@2x.png',
-            'Icon-76.png',
-            'Icon-76@2x.png',
-            'Icon-Small-50.png',
-            'Icon-Small-50@2x.png',
-            'Icon-Small.png',
-            'Icon-Small@2x.png',
-            'Icon-tvOS*.png',
-            'Icon*.ico',
-            'Icon*.icns'
-        },
-        osx = {
-            'launchscreen.nib',
-            'Banner*.png',
-            'Default*.png',
-            'Icon*.png',
-            'Icon*.ico'
-        },
-        win32 = {
-            'launchscreen.nib',
-            'Banner*.png',
-            'Default*.png',
-            'Icon*.png',
-            'Icon*.icns'
-        }
-    },
     window = {
         defaultMode = 'fullscreen',
         defaultViewWidth = 1280,
@@ -126,5 +68,31 @@ settings = {
     plugins = {
         ['plugin.iCloud'] = {publisherId = 'com.coronalabs', supportedPlatforms = {iphone = true, appletvos = true, ['iphone-sim'] = true, osx = true}},
         ['plugin.bit'] = {publisherId = 'com.coronalabs'} -- Needed for Tiled loader
+    },
+    excludeFiles = {
+        all = {
+            'Banner-*.png',
+            'Icon-*dpi.png',
+            'Icon-tvOS-*.png',
+            '*.icns',
+            '*.ico',
+            'icon1024.png',
+            'icon1024-iOS.png',
+            '*.keystore',
+            'maps/*.tmx',
+            'prepare_icons.sh'}
     }
 }
+
+local iPhoneIcons = {}
+for i = 1, #settings.iphone.plist.CFBundleIconFiles do
+    iPhoneIcons[i] = settings.iphone.plist.CFBundleIconFiles[i]
+end
+iPhoneIcons[#iPhoneIcons + 1] = '*.nib'
+iPhoneIcons[#iPhoneIcons + 1] = 'Default-*.png'
+iPhoneIcons[#iPhoneIcons + 1] = 'iTunes*'
+
+settings.excludeFiles.tvos = iPhoneIcons
+settings.excludeFiles.android = iPhoneIcons
+settings.excludeFiles.osx = iPhoneIcons
+settings.excludeFiles.win32 = iPhoneIcons

@@ -130,6 +130,22 @@ function scene:gotoPreviousScene()
 	end)
 end
 
+function scene:show(event)
+	if event.phase == 'did' then
+		-- Tell tvOS that the menu button should be handled by the OS and exit the app
+		system.activate('controllerUserInteraction')
+	end
+end
+
+function scene:hide(event)
+	if event.phase == 'will' then
+		-- Take control over the menu button on tvOS
+		system.deactivate('controllerUserInteraction')
+	end
+end
+
 scene:addEventListener('create')
+scene:addEventListener('show')
+scene:addEventListener('hide')
 
 return scene
