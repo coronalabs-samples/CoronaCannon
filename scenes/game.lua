@@ -108,6 +108,12 @@ function scene:create(event)
 	self.sidebar:toFront()
 
 	controller.setVisualButtons() -- No on-screen buttons, that can be navigated to with a controller
+
+	local function switchMotionAndRotation()
+		-- Switch for tvOS, because it has only one touchpad (axis)
+		controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
+	end
+
 	-- Map movement on gamepad left stick
 	controller.onMotion = function(name, value)
 		if not self.isPaused then
@@ -127,7 +133,7 @@ function scene:create(event)
 			end
 			if math.abs(value) >= 0.08 or math.abs(value) < 0.02 then
 				if name == 'x' then
-					self.cannon.radiusIncrement = value
+					self.cannon.radiusIncrement = -value -- Invert x axis to resemble a slingshot
 				elseif name == 'y' then
 					self.cannon.rotationIncrement = value
 				end
@@ -139,8 +145,7 @@ function scene:create(event)
 		if not self.isPaused then
 			if keyType == 'action' then
 				if keyName == 'buttonA' then
-					-- Switch for tvOS, because it has only one touchpad (axis)
-					controller.onMotion, controller.onRotation = controller.onRotation, controller.onMotion
+					switchMotionAndRotation()
 				else
 					self.cannon:engageForce()
 				end
@@ -150,6 +155,10 @@ function scene:create(event)
 		end
 	end
 
+	-- On tvOS default to cannon control with the remote
+	if system.getInfo('platformName') == 'tvOS' then
+		switchMotionAndRotation()
+	end
 end
 
 function scene:show(event)

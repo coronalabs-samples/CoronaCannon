@@ -174,7 +174,7 @@ function _M.newSidebar(params)
 
 	updateDataboxAndVisibility()
 
-	local badge = display.newImageRect(sidebar, 'images/badge.png', 200, 266)
+	local badge = display.newImageRect(sidebar, 'images/badge.png', 200, 279)
 	badge.anchorX, badge.anchorY = 1, 1
 	badge.x, badge.y = _W - background.width / 2 - 16, background.height / 2 - 16
 	badge.isVisible = false
