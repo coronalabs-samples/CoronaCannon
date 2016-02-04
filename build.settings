@@ -8,7 +8,10 @@ settings = {
         usesPermissions = {},
         supportsTV = true,
         isGame = true,
-        largeHeap = true
+        largeHeap = true,
+        mainIntentFilter = {
+            categories = {'tv.ouya.intent.category.GAME'}
+        }
     },
     iphone = {
         plist = {
@@ -73,11 +76,14 @@ settings = {
         all = {
             'Banner-*.png',
             'Icon-*dpi.png',
+            'Icon-ouya-xiaomi.png',
+            'Icon-ouya.png',
             'Icon-tvOS-*.png',
             '*.icns',
             '*.ico',
             'icon1024.png',
             'icon1024-iOS.png',
+            'key.der',
             '*.keystore',
             'maps/*.tmx',
             'prepare_icons.sh'}
