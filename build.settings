@@ -58,6 +58,9 @@ settings = {
         topShelfImage = 'Icon-tvOS-TopShelf.png', -- 1920x720
         launchImage = 'Icon-tvOS-Launch.png' -- 1920x1080
     },
+    osx = {
+        plist = {NSHumanReadableCopyright = 'Copyright 2016 © Corona Labs, Inc.'}
+	},
     window = {
         defaultMode = 'fullscreen',
         defaultViewWidth = 1280,

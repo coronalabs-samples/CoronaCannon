@@ -21,15 +21,16 @@ _M.keys = {
     up = {type = 'motion', name = 'y', dir = -1},
     down = {type = 'motion', name = 'y', dir = 1},
     button1 = {type = 'action'},
+    buttonA = {type = 'action'}, -- Switch map movement/cannon control on Apple TV remote by pressing the touchpad
+    buttonX = {type = 'action'}, -- Apple TV, play/pause button to fire the cannnon
     space = {type = 'action'},
     enter = {type = 'action'},
     numPadEnter = {type = 'action'},
     escape = {type = 'pause'},
     button2 = {type = 'pause'},
     button9 = {type = 'pause'},
-    menu = {type = 'pause'}, -- Apple TV, menu button to show pause screen
-    buttonA = {type = 'action'}, -- Switch map movement/cannon control on Apple TV remote by pressing the touchpad
-    buttonX = {type = 'action'} -- Apple TV, play/pause button to fire the cannnon
+    buttonB = {type = 'pause'},
+    menu = {type = 'pause'} -- Apple TV, menu button to show pause screen
 }
 
 -- Navigate to on-screen buttons
@@ -206,11 +207,13 @@ function _M:key(event)
     if event.phase == 'down' and (not event.device or event.device == self.activeDevice) then
         if k then
             if k.type == 'action' and self.activeVisualButton then
-                local x, y = self.activeVisualButton.parent:localToContent(self.activeVisualButton.x, self.activeVisualButton.y)
-                local e = {name = 'touch', target = self.activeVisualButton, phase = 'began', x = x, y = y, xStart = x, yStart = y}
-                self.activeVisualButton:dispatchEvent(e)
-                e.phase = 'ended'
-                self.activeVisualButton:dispatchEvent(e)
+                if self.activeVisualButton.parent then
+                    local x, y = self.activeVisualButton.parent:localToContent(self.activeVisualButton.x, self.activeVisualButton.y)
+                    local e = {name = 'touch', target = self.activeVisualButton, phase = 'began', x = x, y = y, xStart = x, yStart = y}
+                    self.activeVisualButton:dispatchEvent(e)
+                    e.phase = 'ended'
+                    self.activeVisualButton:dispatchEvent(e)
+                end
             elseif k.type == 'motion' then
                 if #self.visualButtons > 0 and not self.activeVisualButton then
                     for i = 1, #self.visualButtons do

@@ -2,8 +2,8 @@
 -- It consists of a tower and actual cannon. Cannon can rotate and shoot the cannon balls
 
 local eachframe = require('libs.eachframe')
-local sounds = require('libs.sounds')
 local relayout = require('libs.relayout')
+local sounds = require('libs.sounds')
 
 local _M = {}
 

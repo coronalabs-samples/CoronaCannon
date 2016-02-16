@@ -5,8 +5,8 @@ local composer = require('composer')
 local widget = require('widget')
 local controller = require('libs.controller')
 local databox = require('libs.databox')
-local sounds = require('libs.sounds')
 local relayout = require('libs.relayout')
+local sounds = require('libs.sounds')
 
 local scene = composer.newScene()
 

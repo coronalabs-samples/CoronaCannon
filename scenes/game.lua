@@ -8,9 +8,9 @@ local widget = require('widget') -- Buttons
 local controller = require('libs.controller') -- Gamepad support
 local databox = require('libs.databox') -- Persistant storage, track level completion and settings
 local eachframe = require('libs.eachframe') -- enterFrame manager
+local relayout = require('libs.relayout') -- Repositions elements on screen on window resize
 local sounds = require('libs.sounds') -- Music and sounds manager
 local tiled = require('libs.tiled') -- Tiled map loader
-local relayout = require('libs.relayout') -- Repositions elements on screen on window resize
 
 physics.start()
 physics.setGravity(0, 20) -- Default gravity is too boring
@@ -144,7 +144,7 @@ function scene:create(event)
 	controller.onKey = function(keyName, keyType)
 		if not self.isPaused then
 			if keyType == 'action' then
-				if keyName == 'buttonA' then
+				if keyName == 'buttonA' and system.getInfo('platformName') == 'tvOS' then
 					switchMotionAndRotation()
 				else
 					self.cannon:engageForce()

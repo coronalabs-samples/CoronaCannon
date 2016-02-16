@@ -4,8 +4,8 @@
 local composer = require('composer')
 local widget = require('widget')
 local controller = require('libs.controller')
-local sounds = require('libs.sounds')
 local relayout = require('libs.relayout')
+local sounds = require('libs.sounds')
 
 local scene = composer.newScene()
 
@@ -103,7 +103,7 @@ function scene:create()
 		defaultFile = 'images/buttons/settings.png',
 		overFile = 'images/buttons/settings-over.png',
 		width = 96, height = 105,
-		x = 16 + 48, y = _H - 16 - 52,
+		x = 64 + 48, y = _H - 32 - 52,
 		onRelease = function()
 			sounds.play('tap')
 			sidebar:show()

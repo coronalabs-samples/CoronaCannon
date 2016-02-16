@@ -1,12 +1,15 @@
 -- Corona Cannon
 -- A complete remake of Ghosts vs. Monsters sample game for Corona SDK.
 -- Most of the graphics made by kenney.nl
+-- Please use Corona daily build 2016.2818 or later.
 -- Created by Sergey Lerg for Corona Labs.
 -- License - MIT.
 
 display.setStatusBar(display.HiddenStatusBar)
 system.activate('multitouch')
-display.setDefault('isAnchorClamped', false) -- Needed for scenes/reload_game.lua animation
+if system.getInfo('build') >= '2015.2741' then -- Allow the game to be opened using an old Corona version
+	display.setDefault('isAnchorClamped', false) -- Needed for scenes/reload_game.lua animation
+end
 
 local platform = system.getInfo('platformName')
 if platform == 'tvOS' then
@@ -73,7 +76,8 @@ local databox = require('libs.databox')
 databox({
 	isSoundOn = true,
 	isMusicOn = true,
-	isHelpShown = false
+	isHelpShown = false,
+	overscanValue = 0
 })
 
 -- This library manages sound files and music files playback
@@ -84,6 +88,10 @@ sounds.isMusicOn = databox.isMusicOn
 
 -- This library helps position elements on the screen during the resize event
 require('libs.relayout')
+
+-- This library deals with the overscan issue that is present on many TVs
+local overscan = require('libs.overscan')
+overscan.compensate(databox.overscanValue)
 
 -- Show menu scene
 composer.gotoScene('scenes.menu')

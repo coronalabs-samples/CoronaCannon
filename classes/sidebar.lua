@@ -6,8 +6,9 @@ local composer = require('composer')
 local widget = require('widget')
 local controller = require('libs.controller')
 local databox = require('libs.databox')
-local sounds = require('libs.sounds')
+local overscan = require('libs.overscan')
 local relayout = require('libs.relayout')
+local sounds = require('libs.sounds')
 
 local _M = {}
 
@@ -42,6 +43,7 @@ function _M.newSidebar(params)
 	table.insert(visualButtons, resumeButton)
 
 	if params.levelId then
+		-- Show these two buttons only when playing a level
 		local restartButton = widget.newButton({
 			defaultFile = 'images/buttons/restart.png',
 			overFile = 'images/buttons/restart-over.png',
@@ -69,6 +71,28 @@ function _M.newSidebar(params)
 		menuButton.isRound = true
 		sidebar:insert(menuButton)
 		table.insert(visualButtons, menuButton)
+	else
+		-- Show this button only in the main menu and when a controller is present, indicating a possibility of being played on a TV
+		local overscanButton = widget.newButton({
+			defaultFile = 'images/buttons/overscan.png',
+			overFile = 'images/buttons/overscan-over.png',
+			width = 96, height = 105,
+			x = 0, y = start + spacing * 2,
+			onRelease = function()
+				sounds.play('tap')
+				local value = overscan.value + 1
+				if value > 3 then
+					value = 0
+				end
+				databox.overscanValue = value
+				overscan.compensate(value)
+			end
+		})
+		overscanButton.isRound = true
+		sidebar:insert(overscanButton)
+		table.insert(visualButtons, overscanButton)
+		overscanButton.isVisible = false
+		sidebar.overscanButton = overscanButton
 	end
 
 	local soundsButtons = {}
@@ -197,6 +221,10 @@ function _M.newSidebar(params)
 	appleTvRemoteHelp.x, appleTvRemoteHelp.y = _CX - background.width / 2, 0
 	appleTvRemoteHelp.isVisible = false
 
+	local razerServalHelp = display.newImageRect(sidebar, 'images/controls/razer_serval.png', 500, 500)
+	razerServalHelp.x, razerServalHelp.y = appleTvRemoteHelp.x, appleTvRemoteHelp.y
+	razerServalHelp.isVisible = false
+
 	local gamepadHelp = display.newImageRect(sidebar, 'images/controls/gamepad.png', 500, 500)
 	gamepadHelp.x, gamepadHelp.y = appleTvRemoteHelp.x, appleTvRemoteHelp.y
 	gamepadHelp.isVisible = false
@@ -209,12 +237,21 @@ function _M.newSidebar(params)
 		self.shade = newShade(params.g)
 		self:toFront()
 		badge.isVisible = true
+		local showOverscanButton = false
 		if system.getInfo('platformName') == 'tvOS' then
 			appleTvRemoteHelp.isVisible = true
+			showOverscanButton = true
+		elseif system.getInfo('targetAppStore') == 'ouya' then
+			razerServalHelp.isVisible = true
+			showOverscanButton = true
 		elseif controller.isActive() then
 			gamepadHelp.isVisible = true
+			showOverscanButton = true
 		else
 			touchScreenHelp.isVisible = true
+		end
+		if self.overscanButton and (controller.isActive() or showOverscanButton) then
+			self.overscanButton.isVisible = true
 		end
 		controller.setVisualButtons(visualButtons)
 		if params.levelId then
@@ -227,6 +264,7 @@ function _M.newSidebar(params)
 		self.shade:hide()
 		badge.isVisible = false
 		appleTvRemoteHelp.isVisible = false
+		razerServalHelp.isVisible = false
 		gamepadHelp.isVisible = false
 		touchScreenHelp.isVisible = false
 		transition.to(self, {time = 250, x = -background.width, transition = easing.outExpo, onComplete = params.onHide})
@@ -235,6 +273,7 @@ function _M.newSidebar(params)
 	function sidebar:relayout()
 		sidebar.y = relayout._CY
 		appleTvRemoteHelp.x = relayout._CX - background.width / 2
+		razerServalHelp.x = appleTvRemoteHelp.x
 		gamepadHelp.x = appleTvRemoteHelp.x
 		touchScreenHelp.x = appleTvRemoteHelp.x
 		badge.x = relayout._W - background.width / 2 - 16
