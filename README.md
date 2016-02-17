@@ -14,10 +14,10 @@ The game features:
 * Controller support
 
 Read more about this game:
-[]https://coronalabs.com/blog/2016/02/02/corona-cannon-a-new-corona-sdk-sample-game/]
+https://coronalabs.com/blog/2016/02/02/corona-cannon-a-new-corona-sdk-sample-game/
 
 Learn more about Corona SDK:
-[]https://coronalabs.com]
+https://coronalabs.com
 
 ## Credits
 
