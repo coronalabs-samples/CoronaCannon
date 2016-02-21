@@ -9,6 +9,9 @@ settings = {
         supportsTV = true,
         isGame = true,
         largeHeap = true,
+        usesFeatures = {
+            {name = 'android.hardware.gamepad', required = false}
+        },
         mainIntentFilter = {
             categories = {'tv.ouya.intent.category.GAME'}
         }
