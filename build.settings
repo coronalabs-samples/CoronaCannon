@@ -17,6 +17,7 @@ settings = {
         }
     },
     iphone = {
+        iCloud = true,
         plist = {
             CFBundleIconFiles = {
                 'Icon.png',
@@ -62,6 +63,7 @@ settings = {
         launchImage = 'Icon-tvOS-Launch.png' -- 1920x1080
     },
     osx = {
+        iCloud = {['kvstore-identifier'] = 'com.coronalabs.coronacannon'},
         plist = {NSHumanReadableCopyright = 'Copyright 2016 © Corona Labs, Inc.'}
 	},
     window = {

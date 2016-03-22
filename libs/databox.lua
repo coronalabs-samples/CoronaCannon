@@ -18,8 +18,9 @@ local defaultData = {}
 local path = system.pathForFile('databox.json', system.DocumentsDirectory)
 local isiOS = system.getInfo('platformName') == 'iPhone OS'
 local istvOS = system.getInfo('platformName') == 'tvOS'
+local isOSX = system.getInfo('platformName') == 'Mac OS X'
 
-if isiOS or istvOS then
+if isiOS or istvOS or isOSX then
     iCloud = require('plugin.iCloud')
 end
 
@@ -41,7 +42,7 @@ end
 
 -- When saving, upload to iCloud and save to disk
 local function saveData()
-    if isiOS or istvOS then
+    if iCloud then
         iCloud.set('databox', data)
     end
     if not istvOS then
@@ -57,7 +58,7 @@ end
 -- If no file or no iCloud data - load defaults
 local function loadData()
     local iCloudData
-    if isiOS or istvOS then
+    if iCloud then
         iCloudData = iCloud.get('databox')
     end
     if iCloudData then
