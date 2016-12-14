@@ -60,6 +60,7 @@ settings = {
             }
         },
         topShelfImage = 'Icon-tvOS-TopShelf.png', -- 1920x720
+        topShelfImageWide = 'Icon-tvOS-TopShelfWide.png', -- 2320x720
         launchImage = 'Icon-tvOS-Launch.png' -- 1920x1080
     },
     osx = {
